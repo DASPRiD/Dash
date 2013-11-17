@@ -1,0 +1,26 @@
+{
+    "name": "dasprid/dash",
+    "description": "Router prototype for Zend Framework 3",
+    "authors": [
+        {
+            "name": "DASPRiD",
+            "email": "mail@dasprids.de"
+        }
+    ],
+    "require": {
+        "zendframework/zend-http": "~2.2.5",
+        "zendframework/zend-modulemanager": "~2.2.5",
+        "zendframework/zend-mvc": "~2.2.5",
+        "zendframework/zend-stdlib": "~2.2.5",
+        "zendframework/zend-servicemanager": "~2.2.5",
+        "zendframework/zend-uri": "~2.2.5"
+    },
+    "require-dev": {
+        "phpunit/PHPUnit": "3.7.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "Dash": "src/"
+        }
+    }
+}
