@@ -94,7 +94,8 @@ Overloading
 One confusion that's anticipate to be a minor problem is the confustion of how to overload a given route parameter 
 from within a different module. This is easily achieved by defining the relevant key\value in the configuration that 
 is intended to override the route. 
-*Overwriting a route parameter by the shortcut key will not take effect because it will only be added to the end of the configuration array*
+*Overwriting a route parameter by the shortcut key will not take effect because it will only be added to the end of*
+*the configuration array*
 
 
 ```
