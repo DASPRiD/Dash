@@ -33,7 +33,7 @@ parameters, the format for the shortcut parameters are:
 `[path, controller, action, methods]`
 
 `path`, `controller` and `action` will expect a string, whereas `method` will expect either an array of methods this
-route should expect, a single method in a string, or a string of `'*'` for all methods. An empty string `''` will 
+route should match, a single method in a string, or a string of `'*'` for all methods. An empty string `''` will 
 match no methods. Currently, passing no method defaults to `'get'`.
 
 Along with the indexed shortcut parameters, named configuration can also be passed using key value pairs:
