@@ -23,16 +23,15 @@ class RouterFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $router = new Router(new RouteCollection($serviceLocator->get('Dash\Router\Http\Route\RouteManager')));
-        $config = $serviceLocator->get('config');
+        $routeCollection = new RouteCollection($serviceLocator->get('Dash\Router\Http\Route\RouteManager'));
+        $router          = new Router($routeCollection);
+        $config          = $serviceLocator->get('config');
 
         if (isset($config['dash_router']['base_url'])) {
             $router->setBaseUrl($config['dash_router']['base_url']);
         }
 
         if (isset($config['dash_router']['routes']) && is_array($config['dash_router']['routes'])) {
-            $routeCollection = $router->getRouteCollection();
-
             foreach ($config['dash_router']['routes'] as $name => $route) {
                 $routeCollection->insert($name, $route, isset($route['priority']) ? $route['priority'] : 1);
             }

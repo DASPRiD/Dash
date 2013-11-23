@@ -40,7 +40,7 @@ class RouteMatch implements RouteMatchInterface
     /**
      * @param string $routeName
      */
-    public function setRouteName($routeName)
+    public function prependRouteName($routeName)
     {
         if ($this->routeName === null) {
             $this->routeName = $routeName;
@@ -77,7 +77,7 @@ class RouteMatch implements RouteMatchInterface
     public function merge(RouteMatch $routeMatch)
     {
         $this->params = array_replace($this->params, $routeMatch->getParams());
-        $this->setRouteName($routeMatch->getRouteName());
+        $this->prependRouteName($routeMatch->getRouteName());
     }
 
     /**
@@ -93,11 +93,11 @@ class RouteMatch implements RouteMatchInterface
 
     public function getParam($name, $default = null)
     {
-        if (!array_key_exists($name, $this->params)) {
-            return $default;
+        if (isset($this->params[$name]) || array_key_exists($name, $this->params)) {
+            return $this->params[$name];
         }
 
-        return $this->params[$name];
+        return $default;
     }
 
     public function getParams()

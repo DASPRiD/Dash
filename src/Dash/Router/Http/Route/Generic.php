@@ -188,7 +188,7 @@ class Generic implements RouteInterface
 
         foreach ($this->children as $childName => $childRoute) {
             if (null !== ($childMatch = $childRoute->match($request, $pathOffset))) {
-                $childMatch->setRouteName($childName);
+                $childMatch->prependRouteName($childName);
                 break;
             }
         }
