@@ -31,7 +31,7 @@ class ParseResult
     public function __construct(array $params, $matchLength)
     {
         $this->params      = $params;
-        $this->matchLength = $matchLength;
+        $this->matchLength = (int) $matchLength;
     }
 
     /**
