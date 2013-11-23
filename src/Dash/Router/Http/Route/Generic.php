@@ -42,12 +42,12 @@ class Generic implements RouteInterface
     protected $secure = false;
 
     /**
-     * @var ParserInterface
+     * @var null|ParserInterface
      */
     protected $pathParser;
 
     /**
-     * @var ParserInterface
+     * @var null|ParserInterface
      */
     protected $hostnameParser;
 
