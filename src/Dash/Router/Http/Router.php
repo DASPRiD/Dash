@@ -113,7 +113,7 @@ class Router implements RouterInterface
 
         foreach ($this->routeCollection as $name => $route) {
             if (null !== ($routeMatch = $route->match($request, $baseUrlLength))) {
-                $routeMatch->setRouteName($name);
+                $routeMatch->prependRouteName($name);
                 return $routeMatch;
             }
         }
