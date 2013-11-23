@@ -93,11 +93,11 @@ class RouteMatch implements RouteMatchInterface
 
     public function getParam($name, $default = null)
     {
-        if (!array_key_exists($name, $this->params)) {
-            return $default;
+        if (isset($this->params[$name]) || array_key_exists($name, $this->params)) {
+            return $this->params[$name];
         }
 
-        return $this->params[$name];
+        return $default;
     }
 
     public function getParams()

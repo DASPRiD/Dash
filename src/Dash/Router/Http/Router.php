@@ -101,11 +101,11 @@ class Router implements RouterInterface
             return null;
         }
 
-        if ($this->getBaseUrl() === null && method_exists($request, 'getBaseUrl')) {
-            $this->setBaseUrl($request->getBaseUrl());
+        if ($this->baseUrl === null && method_exists($request, 'getBaseUrl')) {
+            $this->baseUrl = $request->getBaseUrl();
         }
 
-        $baseUrlLength = strlen($this->getBaseUrl());
+        $baseUrlLength = strlen($this->baseUrl);
 
         if ($this->getRequestUri() === null) {
             $this->setRequestUri($request->getUri());

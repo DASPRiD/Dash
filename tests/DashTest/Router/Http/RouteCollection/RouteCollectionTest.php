@@ -43,7 +43,7 @@ class RouteCollectionTest extends TestCase
     {
         $this->collection->insert('foo', $this->mockRoute, 0);
 
-        $this->assertEquals(1, count($this->collection));
+        $this->assertEquals(1, $this->countCollection($this->collection));
 
         foreach ($this->collection as $key => $value) {
             $this->assertEquals('foo', $key);
@@ -94,9 +94,9 @@ class RouteCollectionTest extends TestCase
         $this->collection->insert('foo', $this->mockRoute, 0);
         $this->collection->insert('bar', $this->mockRoute, 0);
 
-        $this->assertEquals(2, count($this->collection));
+        $this->assertEquals(2, $this->countCollection($this->collection));
         $this->collection->remove('foo');
-        $this->assertEquals(1, count($this->collection));
+        $this->assertEquals(1, $this->countCollection($this->collection));
     }
 
     public function testRemovingNonExistentRouteDoesNotYieldError()
@@ -109,9 +109,9 @@ class RouteCollectionTest extends TestCase
         $this->collection->insert('foo', $this->mockRoute, 0);
         $this->collection->insert('bar', $this->mockRoute, 0);
 
-        $this->assertEquals(2, count($this->collection));
+        $this->assertEquals(2, $this->countCollection($this->collection));
         $this->collection->clear();
-        $this->assertEquals(0, count($this->collection));
+        $this->assertEquals(0, $this->countCollection($this->collection));
         $this->assertSame(false, $this->collection->current());
     }
 
@@ -174,12 +174,23 @@ class RouteCollectionTest extends TestCase
         $this->collection->insert('bar', $this->mockRoute, 1);
         $this->collection->insert('baz', $this->mockRoute, -1);
 
-        $order = [];
+        $orders = [];
 
         foreach ($this->collection as $key => $value) {
             $orders[] = $key;
         }
 
         $this->assertEquals(['bar', 'foo', 'baz'], $orders);
+    }
+
+    protected function countCollection(RouteCollection $collection)
+    {
+        $count = 0;
+
+        foreach ($collection as $item) {
+            $count++;
+        }
+
+        return $count;
     }
 }

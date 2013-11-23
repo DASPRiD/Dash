@@ -34,11 +34,6 @@ class RouteCollection implements RouteCollectionInterface
     protected $serial = 0;
 
     /**
-     * @var int
-     */
-    protected $count = 0;
-
-    /**
      * @var bool
      */
     protected $sorted = false;
@@ -53,7 +48,7 @@ class RouteCollection implements RouteCollectionInterface
 
     public function insert($name, $route, $priority = 1)
     {
-        if (!is_array($route) && !$route instanceof RouteInterface) {
+        if (!($route instanceof RouteInterface || is_array($route))) {
             throw new Exception\InvalidArgumentException(sprintf(
                 '$route must either be an array or implement Dash\Router\Http\Route\RouteInterface, %s given',
                 is_object($route) ? get_class($route) : gettype($route)
@@ -61,7 +56,6 @@ class RouteCollection implements RouteCollectionInterface
         }
 
         $this->sorted = false;
-        $this->count++;
 
         $this->routes[$name] = [
             'route'    => $route,
@@ -76,7 +70,6 @@ class RouteCollection implements RouteCollectionInterface
             return;
         }
 
-        $this->count--;
         unset($this->routes[$name]);
     }
 
@@ -84,7 +77,6 @@ class RouteCollection implements RouteCollectionInterface
     {
         $this->routes = [];
         $this->serial = 0;
-        $this->count  = 0;
         $this->sorted = true;
     }
 
@@ -96,7 +88,7 @@ class RouteCollection implements RouteCollectionInterface
 
         $route = $this->routes[$name]['route'];
 
-        if (is_array($route)) {
+        if (!$route instanceof RouteInterface) {
             $type  = (!isset($route['type']) ? 'generic' : $route['type']);
             $route = $this->routes[$name]['route'] = $this->routeManager->get($type, $route);
         }
@@ -159,10 +151,5 @@ class RouteCollection implements RouteCollectionInterface
     public function valid()
     {
         return ($this->current() !== false);
-    }
-
-    public function count()
-    {
-        return $this->count;
     }
 }

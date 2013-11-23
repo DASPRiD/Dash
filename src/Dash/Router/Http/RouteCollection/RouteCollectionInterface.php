@@ -9,14 +9,13 @@
 
 namespace Dash\Router\Http\RouteCollection;
 
-use Countable;
 use Dash\Router\Http\Route\RouteInterface;
 use Iterator;
 
 /**
  * Interface every route collection must implement.
  */
-interface RouteCollectionInterface extends Countable, Iterator
+interface RouteCollectionInterface extends Iterator
 {
     /**
      * Inserts a new route into the list.
