@@ -25,7 +25,7 @@ class Generic implements RouteInterface
      *
      * @var array
      */
-    protected static $validMethods = ['OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT'];
+    protected static $validMethods = ['OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'PATCH'];
 
     /**
      * Allowed methods on this route.
