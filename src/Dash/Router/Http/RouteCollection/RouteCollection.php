@@ -57,10 +57,12 @@ class RouteCollection implements RouteCollectionInterface
 
         $this->sorted = false;
 
+        // Note: the order of the lements in the array are important for the
+        // sorting to work, do not change!
         $this->routes[$name] = [
-            'route'    => $route,
             'priority' => (int) $priority,
             'serial'   => $this->serial++,
+            'route'    => $route,
         ];
     }
 
@@ -97,31 +99,6 @@ class RouteCollection implements RouteCollectionInterface
         return $route;
     }
 
-    /**
-     * Sort the route list.
-     */
-    protected function sort()
-    {
-        uasort($this->routes, [$this, 'compare']);
-        $this->sorted = true;
-    }
-
-    /**
-     * Compare the priority and serial of two routes.
-     *
-     * @param  array $route1,
-     * @param  array $route2
-     * @return int
-     */
-    protected function compare(array $route1, array $route2)
-    {
-        if ($route1['priority'] === $route2['priority']) {
-            return ($route1['serial'] > $route2['serial'] ? -1 : 1);
-        }
-
-        return ($route1['priority'] > $route2['priority'] ? -1 : 1);
-    }
-
     public function current()
     {
         $node = current($this->routes);
@@ -142,7 +119,8 @@ class RouteCollection implements RouteCollectionInterface
     public function rewind()
     {
         if (!$this->sorted) {
-            $this->sort();
+            arsort($this->routes);
+            $this->sorted = true;
         }
 
         reset($this->routes);
