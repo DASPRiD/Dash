@@ -30,9 +30,9 @@ class Generic implements RouteInterface
     /**
      * Allowed methods on this route.
      *
-     * @var array
+     * @var array|string
      */
-    protected $methods = ['GET'];
+    protected $methods = '*';
 
     /**
      * Whether to force the route to be HTTPS.
@@ -86,7 +86,13 @@ class Generic implements RouteInterface
                 throw new Exception\InvalidArgumentException(sprintf('%s is not a valid HTTP method', $method));
             }
 
-            $this->methods[] = $method;
+            $this->methods[$method] = true;
+        }
+
+        if (isset($this->methods['GET']) xor isset($this->methods['HEAD'])) {
+            // Implicitly enable HEAD on GET, and vise versa.
+            $this->methods['GET']  = true;
+            $this->methods['HEAD'] = true;
         }
     }
 
@@ -172,7 +178,7 @@ class Generic implements RouteInterface
         }
 
         if ($completePathMatched) {
-            if ($this->methods === '*' || in_array($request->getMethod(), $this->methods)) {
+            if ($this->methods === '*' || isset($this->methods[$request->getMethod()])) {
                 return $match;
             }
 
