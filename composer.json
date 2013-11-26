@@ -17,10 +17,12 @@
     },
     "require-dev": {
         "phpunit/PHPUnit": "3.7.*",
-        "zendframework/zend-modulemanager": "~2.2.5"
+        "zendframework/zend-modulemanager": "~2.2.5",
+        "zendframework/zend-servicemanager": "~2.2.5"
     },
     "suggest": {
-        "zendframework/zend-modulemanager": "Allows direct integration with Zend Framework 2"
+        "zendframework/zend-modulemanager": "Allows direct integration with Zend Framework applications",
+        "zendframework/zend-servicemanager": "Allows use of the factories"
     },
     "autoload": {
         "psr-0": {
