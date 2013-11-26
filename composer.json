@@ -1,6 +1,8 @@
 {
     "name": "dasprid/dash",
     "description": "Router prototype for Zend Framework 3",
+    "license" : "BSD-2-Clause",
+    "homepage": "https://github.com/DASPRiD/Dash",
     "authors": [
         {
             "name": "DASPRiD",
