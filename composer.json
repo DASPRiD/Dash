@@ -12,7 +12,6 @@
     "require": {
         "zendframework/zend-http": "~2.2.5",
         "zendframework/zend-stdlib": "~2.2.5",
-        "zendframework/zend-servicemanager": "~2.2.5",
         "zendframework/zend-uri": "~2.2.5"
     },
     "require-dev": {
