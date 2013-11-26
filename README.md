@@ -17,6 +17,8 @@
 ```
 --------------------------------------------------------------------------------
 
+[![Build Status](https://api.travis-ci.org/DASPRiD/Dash.png?branch=master)](http://travis-ci.org/DASPRiD/Dash)
+
 This package is the router prototype for Zend Framework 3. It isn't by any means
 complete yet, but evolving quickly. It was just quickly hacked together so it
 can be demonstrated at ZendConEU.
