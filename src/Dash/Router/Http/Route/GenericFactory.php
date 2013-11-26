@@ -40,9 +40,13 @@ class GenericFactory implements FactoryInterface, MutableCreationOptionsInterfac
         $options       = $this->createOptions;
         $parserManager = $routeManager->getServiceLocator()->get('Dash\Router\Http\Parser\ParserManager');
 
+        if (!isset($options['path']) && isset($options[0])) {
+            $options['path'] = $options[0];
+        }
+
         if (isset($options['path_parser'])) {
             $route->setPathParser($parserManager->get($options['path_parser'], $options));
-        } elseif (null !== ($options['path'] = (isset($options['path']) ? $options['path'] : (isset($options[0]) ? $options[0] : null)))) {
+        } elseif (isset($options['path'])) {
             $route->setPathParser($parserManager->get('pathsegment', $options));
         }
 
@@ -52,8 +56,12 @@ class GenericFactory implements FactoryInterface, MutableCreationOptionsInterfac
             $route->setHostnameParser($parserManager->get('hostnamesegment', $options));
         }
 
-        if (null !== ($methods = (isset($options['methods']) ? $options['methods'] : (isset($options[3]) ? $options[3] : null)))) {
-            $route->setMethods($methods);
+        if (!isset($options['methods']) && isset($options[3])) {
+            $options['methods'] = $options[3];
+        }
+
+        if (isset($options['methods'])) {
+            $route->setMethods($options['methods']);
         }
 
         if (isset($options['secure'])) {
@@ -62,11 +70,11 @@ class GenericFactory implements FactoryInterface, MutableCreationOptionsInterfac
 
         $defaults = (isset($options['defaults']) ? $options['defaults'] : []);
 
-        if (isset($options[1]) && !isset($options['controller'])) {
+        if (!isset($options['controller']) && isset($options[1])) {
             $defaults['controller'] = $options[1];
         }
 
-        if (isset($options[2]) && !isset($options['action'])) {
+        if (!isset($options['action']) && isset($options[2])) {
             $defaults['action'] = $options[2];
         }
 

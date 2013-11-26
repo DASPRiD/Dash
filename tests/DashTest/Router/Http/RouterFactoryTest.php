@@ -23,7 +23,7 @@ class RouterFactoryTest extends TestCase
 {
     protected $config = [
         'dash_router' => [
-            'base_url' => '/foo',
+            'base_path' => '/foo',
             'routes' => [
                 'user' => ['/user', 'user', 'index', 'children' => [
                     'create' => ['/create', 'user', 'create', ['get', 'post']],
@@ -42,7 +42,7 @@ class RouterFactoryTest extends TestCase
         $factory = new RouterFactory();
         $router  = $factory->createService($serviceLocator);
 
-        $this->assertEquals('/foo', $router->getBaseUrl());
+        $this->assertEquals('/foo', $router->getBasePath());
 
         $request = new Request();
         $request->setUri('http://example.com/foo/user/edit/1');
@@ -64,7 +64,7 @@ class RouterFactoryTest extends TestCase
     }
 
     /**
-     * @return ServiceManage;
+     * @return ServiceManager
      */
     protected function getServiceLocator()
     {

@@ -66,7 +66,7 @@ class RouteMatch implements RouteMatchInterface
      */
     public function addParseResult(ParseResult $parseResult)
     {
-        $this->params = array_replace($this->params, $parseResult->getParams());
+        $this->params = $parseResult->getParams() + $this->params;
     }
 
     /**
@@ -76,7 +76,7 @@ class RouteMatch implements RouteMatchInterface
      */
     public function merge(RouteMatch $routeMatch)
     {
-        $this->params = array_replace($this->params, $routeMatch->getParams());
+        $this->params = $routeMatch->getParams() + $this->params;
         $this->prependRouteName($routeMatch->getRouteName());
     }
 

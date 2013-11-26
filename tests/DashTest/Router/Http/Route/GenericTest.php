@@ -159,6 +159,16 @@ class GenericTest extends TestCase
         $this->assertEquals(['foo' => 'bar'], $match->getParams());
     }
 
+    public function testMatchOverridesDefaults()
+    {
+        $this->route->setDefaults(['foo' => 'bat', 'baz' =>'bat']);
+        $this->route->setPathParser($this->getSuccessfullPathParser());
+        $match = $this->route->match($this->request, 4);
+
+        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
+    }
+
     public function testSetMethodWithInvalidScalar()
     {
         $this->setExpectedException(

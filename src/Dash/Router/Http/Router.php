@@ -25,7 +25,7 @@ class Router implements RouterInterface
     /**
      * @var string
      */
-    protected $baseUrl;
+    protected $basePath;
 
     /**
      * @var HttpUri
@@ -55,23 +55,23 @@ class Router implements RouterInterface
     }
 
     /**
-     * Sets the base URL.
+     * Sets the base path.
      *
-     * @param string $baseUrl
+     * @param string $basePath
      */
-    public function setBaseUrl($baseUrl)
+    public function setBasePath($basePath)
     {
-        $this->baseUrl = rtrim($baseUrl, '/');
+        $this->basePath = rtrim($basePath, '/');
     }
 
     /**
-     * Gets the base URL.
+     * Gets the base path.
      *
      * @return string
      */
-    public function getBaseUrl()
+    public function getBasePath()
     {
-        return $this->baseUrl;
+        return $this->basePath;
     }
 
     /**
@@ -82,7 +82,6 @@ class Router implements RouterInterface
     public function setRequestUri(HttpUri $uri)
     {
         $this->requestUri = $uri;
-        return $this;
     }
 
     /**
@@ -101,14 +100,14 @@ class Router implements RouterInterface
             return null;
         }
 
-        if ($this->baseUrl === null && method_exists($request, 'getBaseUrl')) {
-            $this->baseUrl = $request->getBaseUrl();
+        if ($this->basePath === null && method_exists($request, 'getBaseUrl')) {
+            $this->basePath = $request->getBaseUrl();
         }
 
-        $baseUrlLength = strlen($this->baseUrl);
+        $baseUrlLength = strlen($this->basePath);
 
-        if ($this->getRequestUri() === null) {
-            $this->setRequestUri($request->getUri());
+        if ($this->requestUri === null) {
+            $this->requestUri = $request->getUri();
         }
 
         foreach ($this->routeCollection as $name => $route) {
