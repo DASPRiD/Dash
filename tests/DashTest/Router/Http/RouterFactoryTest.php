@@ -49,7 +49,7 @@ class RouterFactoryTest extends TestCase
         $serviceLocator->setService('config', $this->config);
 
         $factory = new RouterFactory();
-        $router = $factory->createService($serviceLocator);
+        $router  = $factory->createService($serviceLocator);
 
         $this->assertEquals('/foo', $router->getBasePath());
 
