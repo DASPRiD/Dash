@@ -227,4 +227,55 @@ class SegmentTest extends TestCase
         $route = new Segment('/', '/:foo', []);
         $route->compile([], []);
     }
+
+    public function testCaching()
+    {
+        $parts = null;
+        $regex = null;
+
+        $cacheA = $this->getMock('Zend\Cache\Storage\StorageInterface');
+        $cacheA
+            ->expects($this->any())
+            ->method('setItem')
+            ->will($this->returnCallback(function ($key, $value) use (&$parts, &$regex) {
+                switch (array_pop(explode('-', $key))) {
+                    case 'parts':
+                        $parts = $value;
+                        break;
+
+                    case 'regex':
+                        $regex = $value;
+                        break;
+                }
+            }));
+
+        $routeA = new Segment('/', '/foo[/:bar]', ['bar' => 'baz']);
+        $routeA->setCache($cacheA);
+        $this->assertInstanceOf('Dash\Router\Http\Parser\ParseResult', $routeA->parse('/foo/baz', 0));
+
+        $this->assertNotNull($parts);
+        $this->assertNotNull($regex);
+
+        $cacheB = $this->getMock('Zend\Cache\Storage\StorageInterface');
+        $cacheB
+            ->expects($this->any())
+            ->method('getItem')
+            ->will($this->returnCallback(function ($key, $value) use (&$parts, &$regex) {
+                switch (array_pop(explode('-', $key))) {
+                    case 'parts':
+                        return $parts;
+
+                    case 'regex':
+                        return $regex;
+                }
+            }));
+        $cacheB
+            ->expects($this->never())
+            ->method('setItem');
+
+        $routeB = new Segment('/', '/foo[/:bar]', ['bar' => 'baz']);
+        $routeB->setCache($cacheB);
+        $this->assertInstanceOf('Dash\Router\Http\Parser\ParseResult', $routeB->parse('/foo/baz', 0));
+        $this->assertEquals('/foo/baz', $routeB->compile(['bar' => 'baz'], []));
+    }
 }

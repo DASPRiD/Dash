@@ -10,6 +10,7 @@
 namespace Dash\Router\Http\Parser;
 
 use Dash\Router\Exception;
+use Zend\Cache\Storage\StorageInterface;
 
 class Segment implements ParserInterface
 {
@@ -53,6 +54,16 @@ class Segment implements ParserInterface
     protected $paramMap = [];
 
     /**
+     * @var null|StorageInterface
+     */
+    protected $cache;
+
+    /**
+     * @var null
+     */
+    protected $cacheHash;
+
+    /**
      * @param string $delimiter
      * @param string $pattern
      * @param array  $constraints
@@ -62,6 +73,14 @@ class Segment implements ParserInterface
         $this->delimiter   = $delimiter;
         $this->pattern     = $pattern;
         $this->constraints = $constraints;
+    }
+
+    /**
+     * @param StorageInterface $cache
+     */
+    public function setCache(StorageInterface $cache = null)
+    {
+        $this->cache = $cache;
     }
 
     public function parse($input, $offset)
@@ -100,7 +119,18 @@ class Segment implements ParserInterface
     protected function getRegex()
     {
         if ($this->regex === null) {
-            $this->regex = $this->buildRegex($this->getParts(), $this->constraints);
+            if ($this->cache !== null) {
+                $cacheKey = $this->generateCacheKey('regex');
+
+                if (null !== ($this->regex = $this->cache->getItem($cacheKey))) {
+                    return $this->regex;
+                }
+
+                $this->regex = $this->buildRegex($this->getParts(), $this->constraints);
+                $this->cache->setItem($cacheKey, $this->regex);
+            } else {
+                $this->regex = $this->buildRegex($this->getParts(), $this->constraints);
+            }
         }
 
         return $this->regex;
@@ -114,10 +144,34 @@ class Segment implements ParserInterface
     protected function getParts()
     {
         if ($this->parts === null) {
-            $this->parts = $this->parsePattern($this->pattern);
+            if ($this->cache !== null) {
+                $cacheKey = $this->generateCacheKey('parts');
+
+                if (null !== ($this->parts = $this->cache->getItem($cacheKey))) {
+                    return $this->parts;
+                }
+
+                $this->parts = $this->parsePattern($this->pattern);
+                $this->cache->setItem($cacheKey, $this->parts);
+            } else {
+                $this->parts = $this->parsePattern($this->pattern);
+            }
         }
 
         return $this->parts;
+    }
+
+    /**
+     * @param  string $suffix
+     * @return string
+     */
+    protected function generateCacheKey($suffix)
+    {
+        if ($this->cacheHash === null) {
+            $this->cacheHash = sha1(serialize([$this->delimiter, $this->pattern, $this->constraints]));
+        }
+
+        return 'segment-parser-' . $this->cacheHash . '-' . $suffix;
     }
 
     /**

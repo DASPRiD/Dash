@@ -17,10 +17,12 @@
     "require-dev": {
         "phpunit/PHPUnit": "3.7.*",
         "satooshi/php-coveralls": ">=0.6.0",
+        "zendframework/zend-cache": "~2.2.5",
         "zendframework/zend-modulemanager": "~2.2.5",
         "zendframework/zend-servicemanager": "~2.2.5"
     },
     "suggest": {
+        "zendframework/zend-cache": "Allows caching of runtime compilation",
         "zendframework/zend-modulemanager": "Allows direct integration with Zend Framework applications",
         "zendframework/zend-servicemanager": "Allows use of the factories"
     },
