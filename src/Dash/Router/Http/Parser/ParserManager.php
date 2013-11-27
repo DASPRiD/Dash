@@ -9,7 +9,9 @@
 
 namespace Dash\Router\Http\Parser;
 
+use Zend\Cache\Storage\StorageInterface;
 use Zend\ServiceManager\AbstractPluginManager;
+use Zend\ServiceManager\ConfigInterface;
 use Zend\ServiceManager\Exception;
 
 /**
@@ -17,12 +19,44 @@ use Zend\ServiceManager\Exception;
  */
 class ParserManager extends AbstractPluginManager
 {
+    /**
+     * @var null|StorageInterface
+     */
+    protected $cache;
+
     protected $shareByDefault = false;
 
     protected $factories = [
         'pathsegment'     => 'Dash\Router\Http\Parser\PathSegmentFactory',
         'hostnamesegment' => 'Dash\Router\Http\Parser\HostnameSegmentFactory',
     ];
+
+    public function __construct(ConfigInterface $configuration = null)
+    {
+        parent::__construct($configuration);
+
+        $this->addInitializer([$this, 'injectCache']);
+    }
+
+    /**
+     * Sets a cache injected into all cache-aware parsers.
+     *
+     * @param StorageInterface $cache
+     */
+    public function setCache(StorageInterface $cache = null)
+    {
+        $this->cache = $cache;
+    }
+
+    /**
+     * @param ParserInterface $plugin
+     */
+    public function injectCache($plugin)
+    {
+        if ($plugin instanceof CacheAwareInterface) {
+            $plugin->setCache($this->cache);
+        }
+    }
 
     public function validatePlugin($plugin)
     {

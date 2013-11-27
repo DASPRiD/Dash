@@ -34,4 +34,19 @@ class ParserManagerTest extends TestCase
         $parserManager = new ParserManager();
         $parserManager->validatePlugin(null);
     }
+
+    public function testInjectCache()
+    {
+        $cache  = $this->getMock('Zend\Cache\Storage\StorageInterface');
+        $parser = $this->getMock('DashTest\Router\Http\Parser\Asset\CacheAwareParserInterface');
+        $parser
+            ->expects($this->once())
+            ->method('setCache')
+            ->with($this->equalTo($cache));
+
+        $parserManager = new ParserManager();
+        $parserManager->setCache($cache);
+        $parserManager->setFactory('foo', function() use ($parser) { return $parser; });
+        $parserManager->get('foo');
+    }
 }

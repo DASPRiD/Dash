@@ -12,7 +12,7 @@ namespace Dash\Router\Http\Parser;
 use Dash\Router\Exception;
 use Zend\Cache\Storage\StorageInterface;
 
-class Segment implements ParserInterface
+class Segment implements CacheAwareInterface, ParserInterface
 {
     /**#@+
      * Descriptive part elements.
@@ -75,9 +75,6 @@ class Segment implements ParserInterface
         $this->constraints = $constraints;
     }
 
-    /**
-     * @param StorageInterface $cache
-     */
     public function setCache(StorageInterface $cache = null)
     {
         $this->cache = $cache;
