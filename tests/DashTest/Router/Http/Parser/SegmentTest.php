@@ -238,7 +238,9 @@ class SegmentTest extends TestCase
             ->expects($this->any())
             ->method('setItem')
             ->will($this->returnCallback(function ($key, $value) use (&$parts, &$regex) {
-                switch (array_pop(explode('-', $key))) {
+                $keyParts = explode('-', $key);
+
+                switch (array_pop($keyParts)) {
                     case 'parts':
                         $parts = $value;
                         break;
@@ -261,7 +263,9 @@ class SegmentTest extends TestCase
             ->expects($this->any())
             ->method('getItem')
             ->will($this->returnCallback(function ($key, $value) use (&$parts, &$regex) {
-                switch (array_pop(explode('-', $key))) {
+                $keyParts = explode('-', $key);
+
+                switch (array_pop($keyParts)) {
                     case 'parts':
                         return $parts;
 
