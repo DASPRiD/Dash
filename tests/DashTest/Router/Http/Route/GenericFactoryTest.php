@@ -40,7 +40,7 @@ class GenericFactoryTest extends TestCase
             'hostname' => 'example.com',
             'secure' => true,
             'children' => [
-                'bar'    => ['path' => '/bar'],
+                'bar' => ['path' => '/bar'],
             ],
         ]);
 
@@ -59,7 +59,7 @@ class GenericFactoryTest extends TestCase
             'hostname' => 'example.com',
             'secure' => true,
             'children' => [
-                'bar'    => ['path' => '/bar'],
+                'bar' => ['path' => '/bar'],
             ],
             'path' => '/foo',
         ]);
