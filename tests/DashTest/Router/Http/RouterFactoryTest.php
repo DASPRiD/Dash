@@ -43,24 +43,6 @@ class RouterFactoryTest extends TestCase
         $factory->createService($serviceLocator);
     }
 
-    /**
-     * @return ServiceManager
-     */
-    protected function getServiceLocator()
-    {
-        $serviceLocator = new ServiceManager();
-
-        $routeManager = new RouteManager();
-        $routeManager->setServiceLocator($serviceLocator);
-        $serviceLocator->setService('Dash\Router\Http\Route\RouteManager', $routeManager);
-
-        $parserManager = new ParserManager();
-        $parserManager->setServiceLocator($serviceLocator);
-        $serviceLocator->setService('Dash\Router\Http\Parser\ParserManager', $parserManager);
-
-        return $serviceLocator;
-    }
-
     public function testFactoryIntegration()
     {
         $serviceLocator = $this->getServiceLocator();
@@ -81,4 +63,21 @@ class RouterFactoryTest extends TestCase
         $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
     }
 
+    /**
+     * @return ServiceManager
+     */
+    protected function getServiceLocator()
+    {
+        $serviceLocator = new ServiceManager();
+
+        $routeManager = new RouteManager();
+        $routeManager->setServiceLocator($serviceLocator);
+        $serviceLocator->setService('Dash\Router\Http\Route\RouteManager', $routeManager);
+
+        $parserManager = new ParserManager();
+        $parserManager->setServiceLocator($serviceLocator);
+        $serviceLocator->setService('Dash\Router\Http\Parser\ParserManager', $parserManager);
+
+        return $serviceLocator;
+    }
 }
