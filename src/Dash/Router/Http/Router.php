@@ -9,11 +9,11 @@
 
 namespace Dash\Router\Http;
 
-use Dash\Router\Http\Route\Generic;
+use Dash\Router\Http\Route\RouteInterface;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Dash\Router\RouterInterface;
-use Zend\Stdlib\RequestInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\Stdlib\RequestInterface;
 use Zend\Uri\Http as HttpUri;
 
 class Router implements RouterInterface
@@ -22,12 +22,10 @@ class Router implements RouterInterface
      * @var RouteCollectionInterface
      */
     protected $routeCollection;
-
     /**
      * @var string
      */
     protected $basePath;
-
     /**
      * @var HttpUri
      */
@@ -56,16 +54,6 @@ class Router implements RouterInterface
     }
 
     /**
-     * Sets the base path.
-     *
-     * @param string $basePath
-     */
-    public function setBasePath($basePath)
-    {
-        $this->basePath = rtrim($basePath, '/');
-    }
-
-    /**
      * Gets the base path.
      *
      * @return string
@@ -76,13 +64,13 @@ class Router implements RouterInterface
     }
 
     /**
-     * Sets the request URI.
+     * Sets the base path.
      *
-     * @param HttpUri $uri
+     * @param string $basePath
      */
-    public function setRequestUri(HttpUri $uri)
+    public function setBasePath($basePath)
     {
-        $this->requestUri = $uri;
+        $this->basePath = rtrim($basePath, '/');
     }
 
     /**
@@ -93,6 +81,16 @@ class Router implements RouterInterface
     public function getRequestUri()
     {
         return $this->requestUri;
+    }
+
+    /**
+     * Sets the request URI.
+     *
+     * @param HttpUri $uri
+     */
+    public function setRequestUri(HttpUri $uri)
+    {
+        $this->requestUri = $uri;
     }
 
     public function match(RequestInterface $request)
@@ -111,7 +109,7 @@ class Router implements RouterInterface
             $this->requestUri = $request->getUri();
         }
 
-        /** @var Generic $route */
+        /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
             if (null !== ($routeMatch = $route->match($request, $baseUrlLength))) {
                 $routeMatch->prependRouteName($name);
