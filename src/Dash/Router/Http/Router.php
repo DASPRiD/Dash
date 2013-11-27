@@ -22,10 +22,12 @@ class Router implements RouterInterface
      * @var RouteCollectionInterface
      */
     protected $routeCollection;
+
     /**
      * @var string
      */
     protected $basePath;
+
     /**
      * @var HttpUri
      */
@@ -93,6 +95,12 @@ class Router implements RouterInterface
         $this->requestUri = $uri;
     }
 
+    /**
+     * Matches a given request
+     *
+     * @param RequestInterface $request
+     * @return RouteMatch|\Dash\Router\RouteMatchInterface|null
+     */
     public function match(RequestInterface $request)
     {
         if (!$request instanceof HttpRequest) {
