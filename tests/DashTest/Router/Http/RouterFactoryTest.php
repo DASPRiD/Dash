@@ -34,25 +34,13 @@ class RouterFactoryTest extends TestCase
         ],
     ];
 
-    public function testFactoryIntegration()
+    public function testFactorySucceedsWithoutConfig()
     {
         $serviceLocator = $this->getServiceLocator();
-        $serviceLocator->setService('config', $this->config);
+        $serviceLocator->setService('config', []);
 
         $factory = new RouterFactory();
-        $router = $factory->createService($serviceLocator);
-
-        $this->assertEquals('/foo', $router->getBasePath());
-
-
-        $request = new Request();
-        $request->setUri('http://example.com/foo/user/edit/1');
-
-        $match = $router->match($request);
-
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
-        $this->assertEquals('user/edit', $match->getRouteName());
-        $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
+        $factory->createService($serviceLocator);
     }
 
     /**
@@ -73,12 +61,24 @@ class RouterFactoryTest extends TestCase
         return $serviceLocator;
     }
 
-    public function testFactorySucceedsWithoutConfig()
+    public function testFactoryIntegration()
     {
         $serviceLocator = $this->getServiceLocator();
-        $serviceLocator->setService('config', []);
+        $serviceLocator->setService('config', $this->config);
 
         $factory = new RouterFactory();
-        $factory->createService($serviceLocator);
+        $router = $factory->createService($serviceLocator);
+
+        $this->assertEquals('/foo', $router->getBasePath());
+
+        $request = new Request();
+        $request->setUri('http://example.com/foo/user/edit/1');
+
+        $match = $router->match($request);
+
+        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertEquals('user/edit', $match->getRouteName());
+        $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
     }
+
 }
