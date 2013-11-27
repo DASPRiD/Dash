@@ -25,10 +25,10 @@ class RouterFactoryTest extends TestCase
         'dash_router' => [
             'base_path' => '/foo',
             'routes' => [
-                'user' => ['/user', 'user', 'index', 'children' => [
-                    'create' => ['/create', 'user', 'create', ['get', 'post']],
-                    'edit' => ['/edit/:id', 'user', 'edit', ['get', 'post'], 'constraints' => ['id' => '\d+']],
-                    'delete' => ['/delete/:id', 'user', 'edit', 'constraints' => ['id' => '\d+']],
+                'user' => ['/user', 'index', 'Application\Controller\UserController', 'children' => [
+                    'create' => ['/create', 'create', 'Application\Controller\UserController', ['get', 'post']],
+                    'edit' => ['/edit/:id', 'edit', 'Application\Controller\UserController', ['get', 'post'], 'constraints' => ['id' => '\d+']],
+                    'delete' => ['/delete/:id', 'edit', 'Application\Controller\UserController', 'constraints' => ['id' => '\d+']],
                 ]],
             ],
         ],
@@ -40,9 +40,10 @@ class RouterFactoryTest extends TestCase
         $serviceLocator->setService('config', $this->config);
 
         $factory = new RouterFactory();
-        $router  = $factory->createService($serviceLocator);
+        $router = $factory->createService($serviceLocator);
 
         $this->assertEquals('/foo', $router->getBasePath());
+
 
         $request = new Request();
         $request->setUri('http://example.com/foo/user/edit/1');
@@ -51,16 +52,7 @@ class RouterFactoryTest extends TestCase
 
         $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
         $this->assertEquals('user/edit', $match->getRouteName());
-        $this->assertEquals(['controller' => 'user', 'action' => 'edit', 'id' => '1'], $match->getParams());
-    }
-
-    public function testFactorySucceedsWithoutConfig()
-    {
-        $serviceLocator = $this->getServiceLocator();
-        $serviceLocator->setService('config', []);
-
-        $factory = new RouterFactory();
-        $factory->createService($serviceLocator);
+        $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
     }
 
     /**
@@ -79,5 +71,14 @@ class RouterFactoryTest extends TestCase
         $serviceLocator->setService('Dash\Router\Http\Parser\ParserManager', $parserManager);
 
         return $serviceLocator;
+    }
+
+    public function testFactorySucceedsWithoutConfig()
+    {
+        $serviceLocator = $this->getServiceLocator();
+        $serviceLocator->setService('config', []);
+
+        $factory = new RouterFactory();
+        $factory->createService($serviceLocator);
     }
 }

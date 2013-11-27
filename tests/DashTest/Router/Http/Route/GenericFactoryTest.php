@@ -34,8 +34,8 @@ class GenericFactoryTest extends TestCase
         $factory = new GenericFactory();
         $factory->setCreationOptions([
             '/foo',
-            'controller',
             'action',
+            'controller',
             'get',
             'hostname' => 'example.com',
             'secure' => true,
@@ -44,6 +44,25 @@ class GenericFactoryTest extends TestCase
             ],
         ]);
 
+        $route = $factory->createService($this->getRouteManager());
+        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $route->match($this->getHttpRequest(), 0));
+    }
+
+    public function testPathOverwritesParameter()
+    {
+        $factory = new GenericFactory();
+        $factory->setCreationOptions([
+            '/bar',
+            'action',
+            'controller',
+            'get',
+            'hostname' => 'example.com',
+            'secure' => true,
+            'children' => [
+                'bar'    => ['path' => '/bar'],
+            ],
+            'path' => '/foo',
+        ]);
         $route = $factory->createService($this->getRouteManager());
         $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $route->match($this->getHttpRequest(), 0));
     }

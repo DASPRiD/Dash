@@ -70,12 +70,12 @@ class GenericFactory implements FactoryInterface, MutableCreationOptionsInterfac
 
         $defaults = (isset($options['defaults']) ? $options['defaults'] : []);
 
-        if (!isset($options['controller']) && isset($options[1])) {
-            $defaults['controller'] = $options[1];
+        if (!isset($options['controller']) && isset($options[2])) {
+            $defaults['controller'] = $options[2];
         }
 
-        if (!isset($options['action']) && isset($options[2])) {
-            $defaults['action'] = $options[2];
+        if (!isset($options['action']) && isset($options[1])) {
+            $defaults['action'] = $options[1];
         }
 
         $route->setDefaults($defaults);

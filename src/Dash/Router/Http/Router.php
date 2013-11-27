@@ -9,6 +9,7 @@
 
 namespace Dash\Router\Http;
 
+use Dash\Router\Http\Route\Generic;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Dash\Router\RouterInterface;
 use Zend\Stdlib\RequestInterface;
@@ -110,6 +111,7 @@ class Router implements RouterInterface
             $this->requestUri = $request->getUri();
         }
 
+        /** @var Generic $route */
         foreach ($this->routeCollection as $name => $route) {
             if (null !== ($routeMatch = $route->match($request, $baseUrlLength))) {
                 $routeMatch->prependRouteName($name);
