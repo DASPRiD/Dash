@@ -33,9 +33,12 @@ Route Configuration
 Route configuration is greatly simplified from ZF2, routes now have an (optional) 4 key indexed array as the first 4 
 parameters, the format for the shortcut parameters are:
 
-`[path, controller, action, methods]`
+`[path, action, controller, methods]`
 
-`path`, `controller` and `action` will expect a string, whereas `method` will expect either an array of methods this
+This may feel counter intuitive, but the idea is that the most frequently changed parameter appears earliest in the
+order so that when defining child routes you can skip parameters you wish to inherit.
+
+`path`, `action` and `controller` will expect a string, whereas `method` will expect either an array of methods this
 route should match, a single method in a string, or a string of `'*'` for all methods. An empty string `''` will 
 match no methods. Currently, passing no method defaults to `'get'`.
 
@@ -44,8 +47,8 @@ Along with the indexed shortcut parameters, named configuration can also be pass
 ```
 [
     'path' => '/foo',
-    'controller' => 'FooController',
     'action' => 'bar',
+    'controller' => 'FooController',
     'methods' => ['get', 'post']
 ]
 ```
@@ -63,9 +66,9 @@ Child routes can be simply defined in the `children` key of the configuration of
     'routes' => [
         'user' => ['/user', 'user', 'index', 'children' => 
         [
-            'create' => ['/create', 'user', 'create', ['get', 'post']],
-            'edit' => ['/edit/:id', 'user', 'edit', ['get', 'post'], 'constraints' => ['id' => '\d+']],
-            'delete' => ['/delete/:id', 'user', 'edit', 'constraints' => ['id' => '\d+']],
+            'create' => ['/create', 'Application\Controller\UserController', 'create', ['get', 'post']],
+            'edit' => ['/edit/:id', 'edit', 'Application\Controller\UserController', ['get', 'post'], 'constraints' => ['id' => '\d+']],
+            'delete' => ['/delete/:id', 'edit', 'Application\Controller\UserController', 'constraints' => ['id' => '\d+']],
         ]],
     ],
 ],
@@ -82,19 +85,19 @@ For example, if you want a given route only to match a specific hostname, simply
 pair in that route's configuration:
 
 ```
-'user' => ['/user', 'user', index', ['get'], 'hostname' => 'login.example.com']
+'user' => ['/user',  index', 'Application\Controller\UserController', ['get'], 'hostname' => 'login.example.com']
 ```
 
 Similarly, if a given route should only match the https protocol:
 
 ```
-'user' => ['/user', 'user', index', ['get'], 'secure' => true]
+'user' => ['/user', index', 'Application\Controller\UserController', ['get'], 'secure' => true]
 ```
 
 Overloading
 ===========
 
-One confusion that's anticipate to be a minor problem is the confustion of how to overload a given route parameter 
+One confusion that's anticipate to be a minor problem is the confusion of how to overload a given route parameter
 from within a different module. This is easily achieved by defining the relevant key\value in the configuration that 
 is intended to override the route. 
 *Overwriting a route parameter by the shortcut key will not take effect because it will only be added to the end of*
@@ -103,7 +106,7 @@ is intended to override the route.
 
 ```
 Module A
-'user' => ['/user', 'user', index', ['get']]
+'user' => ['/user', index', 'Application\Controller\UserController', ['get']]
 ```
 
 ```

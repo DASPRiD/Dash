@@ -9,10 +9,11 @@
 
 namespace Dash\Router\Http;
 
+use Dash\Router\Http\Route\RouteInterface;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Dash\Router\RouterInterface;
-use Zend\Stdlib\RequestInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\Stdlib\RequestInterface;
 use Zend\Uri\Http as HttpUri;
 
 class Router implements RouterInterface
@@ -55,6 +56,16 @@ class Router implements RouterInterface
     }
 
     /**
+     * Gets the base path.
+     *
+     * @return string
+     */
+    public function getBasePath()
+    {
+        return $this->basePath;
+    }
+
+    /**
      * Sets the base path.
      *
      * @param string $basePath
@@ -65,13 +76,13 @@ class Router implements RouterInterface
     }
 
     /**
-     * Gets the base path.
+     * Gets the request URI.
      *
-     * @return string
+     * @return HttpUri
      */
-    public function getBasePath()
+    public function getRequestUri()
     {
-        return $this->basePath;
+        return $this->requestUri;
     }
 
     /**
@@ -85,15 +96,11 @@ class Router implements RouterInterface
     }
 
     /**
-     * Gets the request URI.
+     * Matches a given request
      *
-     * @return HttpUri
+     * @param RequestInterface $request
+     * @return RouteMatch|\Dash\Router\RouteMatchInterface|null
      */
-    public function getRequestUri()
-    {
-        return $this->requestUri;
-    }
-
     public function match(RequestInterface $request)
     {
         if (!$request instanceof HttpRequest) {
@@ -110,6 +117,7 @@ class Router implements RouterInterface
             $this->requestUri = $request->getUri();
         }
 
+        /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
             if (null !== ($routeMatch = $route->match($request, $baseUrlLength))) {
                 $routeMatch->prependRouteName($name);
