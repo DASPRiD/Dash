@@ -13,8 +13,8 @@ use Dash\Router\Http\Parser\ParserManager;
 use Dash\Router\Http\Route\RouteManager;
 use Dash\Router\Http\RouterFactory;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\Http\Request;
 use Zend\ServiceManager\ServiceManager;
+use Zend\Uri\Http as HttpUri;
 
 /**
  * @covers Dash\Router\Http\RouterFactory
@@ -23,7 +23,6 @@ class RouterFactoryTest extends TestCase
 {
     protected $config = [
         'dash_router' => [
-            'base_path' => '/foo',
             'routes' => [
                 'user' => ['/user', 'index', 'Application\Controller\UserController', 'children' => [
                     'create' => ['/create', 'create', 'Application\Controller\UserController', ['get', 'post']],
@@ -51,10 +50,19 @@ class RouterFactoryTest extends TestCase
         $factory = new RouterFactory();
         $router  = $factory->createService($serviceLocator);
 
-        $this->assertEquals('/foo', $router->getBasePath());
-
-        $request = new Request();
-        $request->setUri('http://example.com/foo/user/edit/1');
+        $request = $this->getMock('Zend\Http\PhpEnvironment\Request');
+        $request
+            ->expects($this->any())
+            ->method('getBaseUrl')
+            ->will($this->returnValue('/foo'));
+        $request
+            ->expects($this->any())
+            ->method('getMethod')
+            ->will($this->returnValue('GET'));
+        $request
+            ->expects($this->any())
+            ->method('getUri')
+            ->will($this->returnValue(new HttpUri('http://example.com/foo/user/edit/1')));
 
         $match = $router->match($request);
 

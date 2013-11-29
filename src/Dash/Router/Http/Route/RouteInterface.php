@@ -11,6 +11,7 @@ namespace Dash\Router\Http\Route;
 
 use Dash\Router\Http\RouteMatch;
 use Zend\Http\Request as HttpRequest;
+use Zend\Uri\Http as HttpUri;
 
 /**
  * Interface every HTTP route must implement.
@@ -26,5 +27,12 @@ interface RouteInterface
      */
     public function match(HttpRequest $request, $pathOffset);
 
-    public function assemble();
+    /**
+     * Assembles a URL.
+     *
+     * @param  HttpUri     $uri
+     * @param  array       $params
+     * @param  null|string $childName
+     */
+    public function assemble(HttpUri $uri, array $params, $childName = null);
 }

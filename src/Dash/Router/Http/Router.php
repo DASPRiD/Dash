@@ -9,6 +9,7 @@
 
 namespace Dash\Router\Http;
 
+use Dash\Router\Exception;
 use Dash\Router\Http\Route\RouteInterface;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Dash\Router\RouterInterface;
@@ -24,14 +25,9 @@ class Router implements RouterInterface
     protected $routeCollection;
 
     /**
-     * @var string
-     */
-    protected $basePath;
-
-    /**
      * @var HttpUri
      */
-    protected $requestUri;
+    protected $baseUri;
 
     /**
      * Creates a new router.
@@ -56,70 +52,51 @@ class Router implements RouterInterface
     }
 
     /**
-     * Gets the base path.
-     *
-     * @return string
-     */
-    public function getBasePath()
-    {
-        return $this->basePath;
-    }
-
-    /**
-     * Sets the base path.
-     *
-     * @param string $basePath
-     */
-    public function setBasePath($basePath)
-    {
-        $this->basePath = rtrim($basePath, '/');
-    }
-
-    /**
-     * Gets the request URI.
+     * Gets the base URI.
      *
      * @return HttpUri
      */
-    public function getRequestUri()
+    public function getBaseUri()
     {
-        return $this->requestUri;
+        return $this->baseUri;
     }
 
     /**
-     * Sets the request URI.
+     * Sets the base URI.
      *
      * @param HttpUri $uri
      */
-    public function setRequestUri(HttpUri $uri)
+    public function setBaseUri(HttpUri $uri)
     {
-        $this->requestUri = $uri;
+        $this->baseUri = $uri->normalize();
     }
 
-    /**
-     * Matches a given request
-     *
-     * @param RequestInterface $request
-     * @return RouteMatch|\Dash\Router\RouteMatchInterface|null
-     */
     public function match(RequestInterface $request)
     {
         if (!$request instanceof HttpRequest) {
             return null;
         }
 
-        if ($this->basePath === null && method_exists($request, 'getBaseUrl')) {
-            $this->basePath = $request->getBaseUrl();
+        if ($this->baseUri === null) {
+            $requestUri = $request->getUri();
+
+            $this->baseUri = new HttpUri();
+            $this->baseUri->setScheme($requestUri->getScheme());
+            $this->baseUri->setHost($requestUri->getHost());
+            $this->baseUri->setPort($requestUri->getPort());
+
+            if (method_exists($request, 'getBaseUrl')) {
+                $this->baseUri->setPath(rtrim($request->getBaseUrl(), '/'));
+            }
+
+            $this->baseUri->normalize();
         }
 
-        $baseUrlLength = strlen($this->basePath);
-
-        if ($this->requestUri === null) {
-            $this->requestUri = $request->getUri();
-        }
+        $basePathLength = strlen($this->baseUri->getPath());
 
         /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
-            if (null !== ($routeMatch = $route->match($request, $baseUrlLength))) {
+            if (null !== ($routeMatch = $route->match($request, $basePathLength))) {
                 $routeMatch->prependRouteName($name);
                 return $routeMatch;
             }
@@ -128,8 +105,49 @@ class Router implements RouterInterface
         return null;
     }
 
-    public function assemble()
+    public function assemble(array $params, array $options)
     {
+        if (!isset($options['name'])) {
+            throw new Exception\RuntimeException('No route name was supplied');
+        }
 
+        if (false !== ($slashPos = strpos($options['name'], '/'))) {
+            $childName = substr($options['name'], $slashPos + 1) ?: null;
+            $name      = substr($options['name'], 0, $slashPos);
+        } else {
+            $childName = null;
+            $name      = $options['name'];
+        }
+
+        $route = $this->routeCollection->get($name);
+
+        if ($route === null) {
+            throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $name));
+        }
+
+        $uri = clone $this->baseUri;
+        $route->assemble($uri, $params, $childName);
+
+        if (isset($options['query'])) {
+            $uri->setQuery($options['query']);
+        }
+
+        if (isset($options['fragment'])) {
+            $uri->setFragment($options['fragment']);
+        }
+
+        if (!isset($options['force_canonical']) || !$options['force_canonical']) {
+            $uri->makeRelative($this->baseUri);
+
+            if ($uri->getPath() === '') {
+                // @todo This is just a workaround for now, as Zend\Uri\Http
+                //       does not allow empty paths as valid relative URI, needs
+                //       to be fixed.
+                // @see  https://github.com/zendframework/zf2/issues/5563
+                $uri->setPath($this->baseUri->getPath() . $uri->getPath());
+            }
+        }
+
+        return $uri->normalize()->toString();
     }
 }
