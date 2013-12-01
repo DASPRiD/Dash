@@ -223,9 +223,8 @@ class GenericTest extends TestCase
 
     public function testAssembleSecureSchema()
     {
-        $uri = new HttpUri('http://example.com/foo');
         $this->route->setSecure(true);
-        $this->route->assemble($uri, []);
+        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), []);
 
         $this->assertEquals('https://example.com/foo', $uri->toString());
     }
@@ -239,10 +238,9 @@ class GenericTest extends TestCase
             ->with($this->equalTo(['foo' => 'bar']), $this->equalTo(['baz' => 'bat']))
             ->will($this->returnValue('example.org'));
 
-        $uri = new HttpUri('http://example.com/foo');
         $this->route->setHostnameParser($parser);
         $this->route->setDefaults(['baz' => 'bat']);
-        $this->route->assemble($uri, ['foo' => 'bar']);
+        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), ['foo' => 'bar']);
 
         $this->assertEquals('http://example.org/foo', $uri->toString());
     }
@@ -256,10 +254,9 @@ class GenericTest extends TestCase
             ->with($this->equalTo(['foo' => 'bar']), $this->equalTo(['baz' => 'bat']))
             ->will($this->returnValue('/bar'));
 
-        $uri = new HttpUri('http://example.com/foo');
         $this->route->setPathParser($parser);
         $this->route->setDefaults(['baz' => 'bat']);
-        $this->route->assemble($uri, ['foo' => 'bar']);
+        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), ['foo' => 'bar']);
 
         $this->assertEquals('http://example.com/foo/bar', $uri->toString());
     }
