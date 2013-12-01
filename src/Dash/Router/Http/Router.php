@@ -111,18 +111,14 @@ class Router implements RouterInterface
             throw new Exception\RuntimeException('No route name was supplied');
         }
 
-        if (false !== ($slashPos = strpos($options['name'], '/'))) {
-            $childName = substr($options['name'], $slashPos + 1) ?: null;
-            $name      = substr($options['name'], 0, $slashPos);
-        } else {
-            $childName = null;
-            $name      = $options['name'];
-        }
+        $nameParts  = explode('/', $options['name'], 2);
+        $parentName = $nameParts[0];
+        $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
-        $route = $this->routeCollection->get($name);
+        $route = $this->routeCollection->get($parentName);
 
         if ($route === null) {
-            throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $name));
+            throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $parentName));
         }
 
         $uri = $route->assemble(clone $this->baseUri, $params, $childName);

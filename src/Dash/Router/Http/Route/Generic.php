@@ -223,23 +223,18 @@ class Generic implements RouteInterface
         }
 
         if ($childName !== null) {
-            $name = $childName;
-
-            if (false !== ($slashPos = strpos($name, '/'))) {
-                $childName = substr($name, $slashPos + 1) ?: null;
-                $name      = substr($name, 0, $slashPos);
-            } else {
-                $childName = null;
-            }
+            $nameParts  = explode('/', $childName, 2);
+            $parentName = $nameParts[0];
+            $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
             if ($this->children === null) {
                 throw new Exception\RuntimeException('Route has no children to assemble');
             }
 
-            $route = $this->children->get($name);
+            $route = $this->children->get($parentName);
 
             if ($route === null) {
-                throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $name));
+                throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $parentName));
             }
 
             $uri = $route->assemble($uri, $params, $childName);
