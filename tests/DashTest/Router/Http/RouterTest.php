@@ -101,7 +101,10 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo('bar'));
+            ->with($this->anything(), $this->anything(), $this->equalTo('bar'))
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
 
         $router = $this->getAssemblyRouter($route);
         $router->assemble([], ['name' => 'foo/bar']);
@@ -113,7 +116,10 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo(null));
+            ->with($this->anything(), $this->anything(), $this->equalTo(null))
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
 
         $router = $this->getAssemblyRouter($route);
         $router->assemble([], ['name' => 'foo']);
@@ -125,7 +131,10 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo(null));
+            ->with($this->anything(), $this->anything(), $this->equalTo(null))
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
 
         $router = $this->getAssemblyRouter($route);
         $router->assemble([], ['name' => 'foo/']);
@@ -134,6 +143,12 @@ class RouterTest extends TestCase
     public function testAssembleReturnsRelativeUriWithoutModifications()
     {
         $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('/foo', $router->assemble([], ['name' => 'foo']));
@@ -147,6 +162,7 @@ class RouterTest extends TestCase
             ->method('assemble')
             ->will($this->returnCallback(function (HttpUri $uri) {
                 $uri->setHost('example.org');
+                return $uri;
             }));
 
         $router = $this->getAssemblyRouter($route);
@@ -157,6 +173,12 @@ class RouterTest extends TestCase
     public function testAssembleReturnsCanonicalUriWhenForced()
     {
         $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('http://example.com/foo', $router->assemble([], ['name' => 'foo', 'force_canonical' => true]));
@@ -165,6 +187,12 @@ class RouterTest extends TestCase
     public function testAssembleQuery()
     {
         $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('/foo?foo=bar', $router->assemble([], ['name' => 'foo', 'query' => ['foo' => 'bar']]));
@@ -173,6 +201,12 @@ class RouterTest extends TestCase
     public function testAssembleFragment()
     {
         $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('/foo#foo', $router->assemble([], ['name' => 'foo', 'fragment' => 'foo']));
