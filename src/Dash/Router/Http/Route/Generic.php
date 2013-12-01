@@ -242,7 +242,9 @@ class Generic implements RouteInterface
                 throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $name));
             }
 
-            $route->assemble($uri, $params, $childName);
+            $uri = $route->assemble($uri, $params, $childName);
         }
+
+        return $uri;
     }
 }

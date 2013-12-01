@@ -125,8 +125,7 @@ class Router implements RouterInterface
             throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $name));
         }
 
-        $uri = clone $this->baseUri;
-        $route->assemble($uri, $params, $childName);
+        $uri = $route->assemble(clone $this->baseUri, $params, $childName);
 
         if (isset($options['query'])) {
             $uri->setQuery($options['query']);

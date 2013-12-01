@@ -30,9 +30,22 @@ interface RouteInterface
     /**
      * Assembles a URL.
      *
+     * Even thhough by API design the caller works with the returned HttpUri
+     * object, it is not ensured that the passed HttpUri object is not modified,
+     * as the implementation is allowed to just modify the object and return it
+     * again.
+     *
+     * If you rely on your original object to not be modifed, you should call
+     * this method the following way:
+     *
+     * <code>
+     * $route->assemble(clone $uri, $params, $childName);
+     * </code>
+     *
      * @param  HttpUri     $uri
      * @param  array       $params
      * @param  null|string $childName
+     * @return HttpUri
      */
     public function assemble(HttpUri $uri, array $params, $childName = null);
 }
