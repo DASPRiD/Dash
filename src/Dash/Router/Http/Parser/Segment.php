@@ -40,7 +40,7 @@ class Segment implements ParserInterface
     /**
      * @var array
      */
-    protected $parts;
+    protected $tokens;
 
     /**
      * @var string
@@ -86,7 +86,7 @@ class Segment implements ParserInterface
     public function compile(array $params, array $defaults)
     {
         return $this->buildString(
-            $this->getParts(),
+            $this->getTokens(),
             array_merge($defaults, $params),
             $defaults
         );
@@ -100,24 +100,24 @@ class Segment implements ParserInterface
     protected function getRegex()
     {
         if ($this->regex === null) {
-            $this->regex = $this->buildRegex($this->getParts(), $this->constraints);
+            $this->regex = $this->buildRegex($this->getTokens(), $this->constraints);
         }
 
         return $this->regex;
     }
 
     /**
-     * Gets parsed parts.
+     * Gets parsed tokens.
      *
      * @return array
      */
-    protected function getParts()
+    protected function getTokens()
     {
-        if ($this->parts === null) {
-            $this->parts = $this->parsePattern($this->pattern);
+        if ($this->tokens === null) {
+            $this->tokens = $this->parsePattern($this->pattern);
         }
 
-        return $this->parts;
+        return $this->tokens;
     }
 
     /**
@@ -131,8 +131,7 @@ class Segment implements ParserInterface
     {
         $currentPos      = 0;
         $length          = strlen($pattern);
-        $parts           = [];
-        $levelParts      = [&$parts];
+        $tokens          = [];
         $level           = 0;
         $quotedDelimiter = preg_quote($this->delimiter);
 
@@ -142,7 +141,7 @@ class Segment implements ParserInterface
             $currentPos += strlen($matches[0]);
 
             if (!empty($matches['literal'])) {
-                $levelParts[$level][] = ['literal', $matches['literal']];
+                $tokens[] = ['literal', $matches['literal']];
             }
 
             if ($matches['token'] === ':') {
@@ -150,16 +149,14 @@ class Segment implements ParserInterface
                     throw new Exception\RuntimeException('Found empty parameter name');
                 }
 
-                $levelParts[$level][] = ['parameter', $matches['name'], isset($matches['delimiters']) ? $matches['delimiters'] : null];
+                $tokens[] = ['parameter', $matches['name'], isset($matches['delimiters']) ? $matches['delimiters'] : null];
 
                 $currentPos += strlen($matches[0]);
             } elseif ($matches['token'] === '[') {
-                $levelParts[$level][] = ['optional', []];
-                $levelParts[$level + 1] = &$levelParts[$level][count($levelParts[$level]) - 1][1];
-
+                $tokens[] = array('optional-start');
                 $level++;
             } elseif ($matches['token'] === ']') {
-                unset($levelParts[$level]);
+                $tokens[] = array('optional-end');
                 $level--;
 
                 if ($level < 0) {
@@ -174,43 +171,48 @@ class Segment implements ParserInterface
             throw new Exception\RuntimeException('Found unbalanced brackets');
         }
 
-        return $parts;
+        return $tokens;
     }
 
     /**
-     * Builds the matching regex from parsed parts.
+     * Builds the matching regex from parsed tokens.
      *
-     * @param  array $parts
+     * @param  array $tokens
      * @param  array $constraints
-     * @param  int   $groupIndex
      * @return string
      */
-    protected function buildRegex(array $parts, array $constraints, &$groupIndex = 1)
+    protected function buildRegex(array $tokens, array $constraints)
     {
-        $regex = '';
+        $groupIndex      = 1;
+        $regex           = '';
+        $quotedDelimiter = preg_quote($this->delimiter);
 
-        foreach ($parts as $part) {
-            switch ($part[static::TYPE]) {
+        foreach ($tokens as $token) {
+            switch ($token[static::TYPE]) {
                 case 'literal':
-                    $regex .= preg_quote($part[static::LITERAL]);
+                    $regex .= preg_quote($token[static::LITERAL]);
                     break;
 
                 case 'parameter':
                     $groupName = '?P<param' . $groupIndex . '>';
 
-                    if (isset($constraints[$part[static::NAME]])) {
-                        $regex .= '(' . $groupName . $constraints[$part[static::NAME]] . ')';
-                    } elseif ($part[static::DELIMITERS] === null) {
-                        $regex .= '(' . $groupName . '[^' . preg_quote($this->delimiter) . ']+)';
+                    if (isset($constraints[$token[static::NAME]])) {
+                        $regex .= '(' . $groupName . $constraints[$token[static::NAME]] . ')';
+                    } elseif ($token[static::DELIMITERS] === null) {
+                        $regex .= '(' . $groupName . '[^' . $quotedDelimiter . ']+)';
                     } else {
-                        $regex .= '(' . $groupName . '[^' . $part[static::DELIMITERS] . ']+)';
+                        $regex .= '(' . $groupName . '[^' . $token[static::DELIMITERS] . ']+)';
                     }
 
-                    $this->paramMap['param' . $groupIndex++] = $part[static::NAME];
+                    $this->paramMap['param' . $groupIndex++] = $token[static::NAME];
                     break;
 
-                case 'optional':
-                    $regex .= '(?:' . $this->buildRegex($part[static::NAME], $constraints, $groupIndex) . ')?';
+                case 'optional-start':
+                    $regex .= '(?:';
+                    break;
+
+                case 'optional-end':
+                    $regex .= ')?';
                     break;
             }
         }
@@ -224,57 +226,65 @@ class Segment implements ParserInterface
      * @param  array $parts
      * @param  array $mergedParams
      * @param  array $defaults
-     * @param  bool  $isOptional
      * @return string
      * @throws Exception\InvalidArgumentException
      */
-    protected function buildString(array $parts, array $mergedParams, array $defaults, $isOptional = false)
+    protected function buildString(array $parts, array $mergedParams, array $defaults)
     {
-        $path      = '';
-        $skip      = true;
-        $skippable = false;
+        $stack   = [];
+        $current = [
+            'is_optional' => false,
+            'skip'        => true,
+            'skippable'   => false,
+            'path'        => '',
+        ];
 
         foreach ($parts as $part) {
             switch ($part[static::TYPE]) {
                 case 'literal':
-                    $path .= $part[static::LITERAL];
+                    $current['path'] .= $part[static::LITERAL];
                     break;
 
                 case 'parameter':
-                    $skippable = true;
+                    $current['skippable'] = true;
 
                     if (!isset($mergedParams[$part[static::NAME]])) {
-                        if (!$isOptional) {
+                        if (!$current['is_optional']) {
                             throw new Exception\InvalidArgumentException(sprintf('Missing parameter "%s"', $part[static::NAME]));
                         }
 
-                        return '';
-                    } elseif (!$isOptional || !isset($defaults[$part[static::NAME]]) || $defaults[$part[static::NAME]] !== $mergedParams[$part[static::NAME]]) {
-                        $skip = false;
+                        continue;
+                    } elseif (!$current['is_optional'] || !isset($defaults[$part[static::NAME]]) || $defaults[$part[static::NAME]] !== $mergedParams[$part[static::NAME]]) {
+                        $current['skip'] = false;
                     }
 
                     // @todo Implement proper encoding strategy
-                    $path .= $mergedParams[$part[static::NAME]];
-
-                    $this->assembledParams[] = $part[static::NAME];
+                    $current['path'] .= $mergedParams[$part[static::NAME]];
                     break;
 
-                case 'optional':
-                    $skippable = true;
-                    $optionalPart = $this->buildString($part[static::NAME], $mergedParams, $defaults, true);
+                case 'optional-start':
+                    $stack[] = $current;
+                    $current = [
+                        'is_optional' => true,
+                        'skip'        => true,
+                        'skippable'   => false,
+                        'path'        => '',
+                    ];
+                    break;
 
-                    if ($optionalPart !== '') {
-                        $path .= $optionalPart;
-                        $skip = false;
+                case 'optional-end':
+                    $parent = array_pop($stack);
+
+                    if ($current['is_optional'] && $current['skippable'] && $current['skip'] && $current['path'] !== '') {
+                        $parent['path'] = $current['path'];
+                        $parent['skip'] = false;
                     }
+
+                    $current = $parent;
                     break;
             }
         }
 
-        if ($isOptional && $skippable && $skip) {
-            return '';
-        }
-
-        return $path;
+        return $current['path'];
     }
 }
