@@ -14,6 +14,7 @@ use Dash\Router\Http\Parser\ParserInterface;
 use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Zend\Http\Request as HttpRequest;
+use Zend\Uri\Http as HttpUri;
 
 /**
  * A generic route which takes care of all HTTP aspects.
@@ -207,8 +208,35 @@ class Generic implements RouteInterface
         return $match;
     }
 
-    public function assemble()
+    /**
+     * @throws Exception\RuntimeException
+     */
+    public function assemble(HttpUri $uri, array $params, $childName = null)
     {
+        if ($this->secure) {
+            $uri->setScheme('https');
+        }
 
+        if ($this->hostnameParser !== null) {
+            $uri->setHost($this->hostnameParser->compile($params, $this->defaults));
+        }
+
+        if ($this->pathParser !== null) {
+            $uri->setPath($uri->getPath() . $this->pathParser->compile($params, $this->defaults));
+        }
+
+        if ($childName !== null) {
+            $nameParts  = explode('/', $childName, 2);
+            $parentName = $nameParts[0];
+            $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
+
+            if ($this->children === null) {
+                throw new Exception\RuntimeException('Route has no children to assemble');
+            }
+
+            $uri = $this->children->get($parentName)->assemble($uri, $params, $childName);
+        }
+
+        return $uri;
     }
 }

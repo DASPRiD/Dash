@@ -46,6 +46,9 @@ class RouteCollection implements RouteCollectionInterface
         $this->routeManager = $routeManager;
     }
 
+    /**
+     * @throws Exception\InvalidArgumentException
+     */
     public function insert($name, $route, $priority = 1)
     {
         if (!($route instanceof RouteInterface || is_array($route))) {
@@ -57,7 +60,7 @@ class RouteCollection implements RouteCollectionInterface
 
         $this->sorted = false;
 
-        // Note: the order of the lements in the array are important for the
+        // Note: the order of the elements in the array are important for the
         // sorting to work, do not change!
         $this->routes[$name] = [
             'priority' => (int) $priority,
@@ -85,7 +88,7 @@ class RouteCollection implements RouteCollectionInterface
     public function get($name)
     {
         if (!isset($this->routes[$name])) {
-            return null;
+            throw new Exception\OutOfBoundsException(sprintf('Route with name "%s" was not found', $name));
         }
 
         $route = $this->routes[$name]['route'];
@@ -94,7 +97,6 @@ class RouteCollection implements RouteCollectionInterface
             $type  = (!isset($route['type']) ? 'generic' : $route['type']);
             $route = $this->routes[$name]['route'] = $this->routeManager->get($type, $route);
         }
-
 
         return $route;
     }

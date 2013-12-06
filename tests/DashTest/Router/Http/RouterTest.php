@@ -28,24 +28,15 @@ class RouterTest extends TestCase
         $this->assertSame($routeCollection, $router->getRouteCollection());
     }
 
-    public function testSetBasePath()
+    public function testSetBaseUri()
     {
         $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
         $router          = new Router($routeCollection);
 
-        $this->assertNull($router->getBasePath());
-        $router->setBasePath('/foo/');
-        $this->assertEquals('/foo', $router->getBasePath());
-    }
-
-    public function testSetRequestUri()
-    {
-        $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
-        $router          = new Router($routeCollection);
-
-        $this->assertNull($router->getRequestUri());
-        $router->setRequestUri($requestUri = $this->getMock('Zend\Uri\Http'));
-        $this->assertEquals($requestUri, $router->getRequestUri());
+        $baseUri = new HttpUri('http://example.com/foo');
+        $this->assertNull($router->getBaseUri());
+        $router->setBaseUri($baseUri);
+        $this->assertSame($baseUri, $router->getBaseUri());
     }
 
     public function testMatchDeniesInvalidRequest()
@@ -56,22 +47,13 @@ class RouterTest extends TestCase
         $this->assertNull($router->match($this->getMock('Zend\Stdlib\Request')));
     }
 
-    public function testMatchSetsBasePath()
+    public function testMatchSetsBaseUri()
     {
         $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
         $router          = new Router($routeCollection);
 
         $router->match($this->getHttpRequest());
-        $this->assertEquals('/foo', $router->getBasePath());
-    }
-
-    public function testMatchSetsRequestUri()
-    {
-        $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
-        $router          = new Router($routeCollection);
-
-        $router->match($this->getHttpRequest());
-        $this->assertEquals('http://example.com/foo/bar', $router->getRequestUri()->toString());
+        $this->assertEquals('http://example.com/foo', $router->getBaseUri()->toString());
     }
 
     public function testRouteMatchIsReturned()
@@ -95,13 +77,130 @@ class RouterTest extends TestCase
         $this->assertEquals('foo', $routeMatch->getRouteName());
     }
 
-    public function testAssemble()
+    public function testAssembleFailsWithoutRouteName()
     {
-        // @todo just a placeholder for the nice 100% coverage ;)
         $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
         $router          = new Router($routeCollection);
 
-        $router->assemble();
+        $this->setExpectedException('Dash\Router\Exception\RuntimeException', 'No route name was supplied');
+        $router->assemble([], []);
+    }
+
+    public function testAssemblePassesDownChildName()
+    {
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->with($this->anything(), $this->anything(), $this->equalTo('bar'))
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+
+        $router = $this->getAssemblyRouter($route);
+        $router->assemble([], ['name' => 'foo/bar']);
+    }
+
+    public function testAssemblePassesNullWithoutFurtherChildren()
+    {
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->with($this->anything(), $this->anything(), $this->equalTo(null))
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+
+        $router = $this->getAssemblyRouter($route);
+        $router->assemble([], ['name' => 'foo']);
+    }
+
+    public function testAssembleIgnoresTrailingSlash()
+    {
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->with($this->anything(), $this->anything(), $this->equalTo(null))
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+
+        $router = $this->getAssemblyRouter($route);
+        $router->assemble([], ['name' => 'foo/']);
+    }
+
+    public function testAssembleReturnsRelativeUriWithoutModifications()
+    {
+        $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+        $router = $this->getAssemblyRouter($route);
+
+        $this->assertEquals('/foo', $router->assemble([], ['name' => 'foo']));
+    }
+
+    public function testAssembleReturnsCanonicalUriWithModifications()
+    {
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                $uri->setHost('example.org');
+                return $uri;
+            }));
+
+        $router = $this->getAssemblyRouter($route);
+
+        $this->assertEquals('http://example.org/foo', $router->assemble([], ['name' => 'foo']));
+    }
+
+    public function testAssembleReturnsCanonicalUriWhenForced()
+    {
+        $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+        $router = $this->getAssemblyRouter($route);
+
+        $this->assertEquals('http://example.com/foo', $router->assemble([], ['name' => 'foo', 'force_canonical' => true]));
+    }
+
+    public function testAssembleQuery()
+    {
+        $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+        $router = $this->getAssemblyRouter($route);
+
+        $this->assertEquals('/foo?foo=bar', $router->assemble([], ['name' => 'foo', 'query' => ['foo' => 'bar']]));
+    }
+
+    public function testAssembleFragment()
+    {
+        $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('assemble')
+            ->will($this->returnCallback(function (HttpUri $uri) {
+                return $uri;
+            }));
+        $router = $this->getAssemblyRouter($route);
+
+        $this->assertEquals('/foo#foo', $router->assemble([], ['name' => 'foo', 'fragment' => 'foo']));
     }
 
     protected function getHttpRequest()
@@ -119,5 +218,20 @@ class RouterTest extends TestCase
             ->will($this->returnValue(new HttpUri('http://example.com/foo/bar')));
 
         return $request;
+    }
+
+    protected function getAssemblyRouter(\Dash\Router\Http\Route\RouteInterface $route)
+    {
+        $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
+        $routeCollection
+            ->expects($this->once())
+            ->method('get')
+            ->with($this->equalTo('foo'))
+            ->will($this->returnValue($route));
+
+        $router = new Router($routeCollection);
+        $router->setBaseUri(new HttpUri('http://example.com/foo'));
+
+        return $router;
     }
 }

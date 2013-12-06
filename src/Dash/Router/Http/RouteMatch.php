@@ -80,12 +80,6 @@ class RouteMatch implements RouteMatchInterface
         $this->prependRouteName($routeMatch->getRouteName());
     }
 
-    /**
-     * Sets a single parameter.
-     *
-     * @param string $name
-     * @param mixed  $value
-     */
     public function setParam($name, $value)
     {
         $this->params[$name] = $value;

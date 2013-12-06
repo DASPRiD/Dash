@@ -118,9 +118,13 @@ class RouteCollectionTest extends TestCase
     public function testGet()
     {
         $this->collection->insert('foo', $this->mockRoute, 0);
-
         $this->assertSame($this->mockRoute, $this->collection->get('foo'));
-        $this->assertNull($this->collection->get('bar'));
+    }
+
+    public function testGetNonExistentRoute()
+    {
+        $this->setExpectedException('Dash\Router\Exception\OutOfBoundsException', 'Route with name "foo" was not found');
+        $this->collection->get('foo');
     }
 
     public function testLIFOOnly()
@@ -129,7 +133,7 @@ class RouteCollectionTest extends TestCase
         $this->collection->insert('bar', $this->mockRoute, 0);
         $this->collection->insert('baz', $this->mockRoute, 0);
 
-        $order = [];
+        $orders = [];
 
         foreach ($this->collection as $key => $value) {
             $orders[] = $key;
@@ -144,7 +148,7 @@ class RouteCollectionTest extends TestCase
         $this->collection->insert('bar', $this->mockRoute, 0);
         $this->collection->insert('baz', $this->mockRoute, 2);
 
-        $order = [];
+        $orders = [];
 
         foreach ($this->collection as $key => $value) {
             $orders[] = $key;
@@ -159,7 +163,7 @@ class RouteCollectionTest extends TestCase
         $this->collection->insert('bar', $this->mockRoute, 0);
         $this->collection->insert('baz', $this->mockRoute, 1);
 
-        $order = [];
+        $orders = [];
 
         foreach ($this->collection as $key => $value) {
             $orders[] = $key;

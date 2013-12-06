@@ -27,10 +27,6 @@ class RouterFactory implements FactoryInterface
         $router          = new Router($routeCollection);
         $config          = $serviceLocator->get('config');
 
-        if (isset($config['dash_router']['base_path'])) {
-            $router->setBasePath($config['dash_router']['base_path']);
-        }
-
         if (isset($config['dash_router']['routes']) && is_array($config['dash_router']['routes'])) {
             foreach ($config['dash_router']['routes'] as $name => $route) {
                 $routeCollection->insert($name, $route, isset($route['priority']) ? $route['priority'] : 1);

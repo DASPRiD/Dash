@@ -226,6 +226,7 @@ class Segment implements ParserInterface
      * @param  array $defaults
      * @param  bool  $isOptional
      * @return string
+     * @throws Exception\InvalidArgumentException
      */
     protected function buildString(array $parts, array $mergedParams, array $defaults, $isOptional = false)
     {

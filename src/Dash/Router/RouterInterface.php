@@ -17,7 +17,7 @@ use Zend\Stdlib\RequestInterface;
 interface RouterInterface
 {
     /**
-     * Match a given request.
+     * Matches a given request.
      *
      * In case the request is not compatible with the router or the request can
      * not be matched otherwise, null should be returned.
@@ -27,5 +27,12 @@ interface RouterInterface
      */
     public function match(RequestInterface $request);
 
-    public function assemble();
+    /**
+     * Assembles a response.
+     *
+     * @param  array $params
+     * @param  array $options
+     * @return mixed
+     */
+    public function assemble(array $params, array $options);
 }

@@ -11,6 +11,7 @@ namespace Dash\Router\Http\Route;
 
 use Dash\Router\Http\RouteMatch;
 use Zend\Http\Request as HttpRequest;
+use Zend\Uri\Http as HttpUri;
 
 /**
  * Interface every HTTP route must implement.
@@ -26,5 +27,25 @@ interface RouteInterface
      */
     public function match(HttpRequest $request, $pathOffset);
 
-    public function assemble();
+    /**
+     * Assembles a URL.
+     *
+     * Even thhough by API design the caller works with the returned HttpUri
+     * object, it is not ensured that the passed HttpUri object is not modified,
+     * as the implementation is allowed to just modify the object and return it
+     * again.
+     *
+     * If you rely on your original object to not be modifed, you should call
+     * this method the following way:
+     *
+     * <code>
+     * $route->assemble(clone $uri, $params, $childName);
+     * </code>
+     *
+     * @param  HttpUri     $uri
+     * @param  array       $params
+     * @param  null|string $childName
+     * @return HttpUri
+     */
+    public function assemble(HttpUri $uri, array $params, $childName = null);
 }

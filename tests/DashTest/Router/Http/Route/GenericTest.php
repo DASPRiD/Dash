@@ -15,6 +15,7 @@ use Dash\Router\Http\RouteCollection\RouteCollection;
 use Dash\Router\Http\RouteMatch;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Http\Request;
+use Zend\Uri\Http as HttpUri;
 
 /**
  * @covers Dash\Router\Http\Route\Generic
@@ -220,10 +221,95 @@ class GenericTest extends TestCase
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
     }
 
-    public function testAssemble()
+    public function testAssembleSecureSchema()
     {
-        // @todo just a placeholder for the nice 100% coverage ;)
-        $this->route->assemble();
+        $this->route->setSecure(true);
+        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), []);
+
+        $this->assertEquals('https://example.com/foo', $uri->toString());
+    }
+
+    public function testAssembleHostname()
+    {
+        $parser = $this->getMock('Dash\Router\Http\Parser\ParserInterface');
+        $parser
+            ->expects($this->once())
+            ->method('compile')
+            ->with($this->equalTo(['foo' => 'bar']), $this->equalTo(['baz' => 'bat']))
+            ->will($this->returnValue('example.org'));
+
+        $this->route->setHostnameParser($parser);
+        $this->route->setDefaults(['baz' => 'bat']);
+        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), ['foo' => 'bar']);
+
+        $this->assertEquals('http://example.org/foo', $uri->toString());
+    }
+
+    public function testAssemblePath()
+    {
+        $parser = $this->getMock('Dash\Router\Http\Parser\ParserInterface');
+        $parser
+            ->expects($this->once())
+            ->method('compile')
+            ->with($this->equalTo(['foo' => 'bar']), $this->equalTo(['baz' => 'bat']))
+            ->will($this->returnValue('/bar'));
+
+        $this->route->setPathParser($parser);
+        $this->route->setDefaults(['baz' => 'bat']);
+        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), ['foo' => 'bar']);
+
+        $this->assertEquals('http://example.com/foo/bar', $uri->toString());
+    }
+
+    public function testAssembleFailsWithoutChildren()
+    {
+        $this->setExpectedException('Dash\Router\Exception\RuntimeException', 'Route has no children to assemble');
+        $this->route->assemble(new HttpUri(), [], 'foo');
+    }
+
+    public function testAssemblePassesDownChildName()
+    {
+        $child = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $child
+            ->expects($this->once())
+            ->method('assemble')
+            ->with($this->anything(), $this->anything(), $this->equalTo('bar'));
+
+        $routeCollection = $this->getRouteCollection();
+        $routeCollection->insert('foo', $child);
+
+        $this->route->setChildren($routeCollection);
+        $this->route->assemble(new HttpUri(), [], 'foo/bar');
+    }
+
+    public function testAssemblePassesNullWithoutFurtherChildren()
+    {
+        $child = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $child
+            ->expects($this->once())
+            ->method('assemble')
+            ->with($this->anything(), $this->anything(), $this->equalTo(null));
+
+        $routeCollection = $this->getRouteCollection();
+        $routeCollection->insert('foo', $child);
+
+        $this->route->setChildren($routeCollection);
+        $this->route->assemble(new HttpUri(), [], 'foo');
+    }
+
+    public function testAssembleIgnoresTrailingSlash()
+    {
+        $child = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $child
+            ->expects($this->once())
+            ->method('assemble')
+            ->with($this->anything(), $this->anything(), $this->equalTo(null));
+
+        $routeCollection = $this->getRouteCollection();
+        $routeCollection->insert('foo', $child);
+
+        $this->route->setChildren($routeCollection);
+        $this->route->assemble(new HttpUri(), [], 'foo/');
     }
 
     /**
@@ -235,7 +321,7 @@ class GenericTest extends TestCase
     }
 
     /**
-     * @return \Dash\Router\Http\Parser\ParserInterface||\PHPUnit_Framework_MockObject_MockObject
+     * @return \Dash\Router\Http\Parser\ParserInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected function getIncompletePathParser()
     {
