@@ -208,6 +208,9 @@ class Generic implements RouteInterface
         return $match;
     }
 
+    /**
+     * @throws Exception\RuntimeException
+     */
     public function assemble(HttpUri $uri, array $params, $childName = null)
     {
         if ($this->secure) {

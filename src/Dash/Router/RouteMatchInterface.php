@@ -15,6 +15,14 @@ namespace Dash\Router;
 interface RouteMatchInterface
 {
     /**
+     * Sets a single parameter.
+     *
+     * @param string $name
+     * @param mixed  $value
+     */
+    public function setParam($name, $value);
+
+    /**
      * Gets a specific parameter.
      *
      * @param  string $name

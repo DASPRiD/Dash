@@ -42,8 +42,6 @@ class Router implements RouterInterface
     /**
      * Gets the route collection.
      *
-     * If none was set yet, a generic was is created.
-     *
      * @return RouteCollectionInterface
      */
     public function getRouteCollection()
@@ -105,6 +103,9 @@ class Router implements RouterInterface
         return null;
     }
 
+    /**
+     * @throws Exception\RuntimeException
+     */
     public function assemble(array $params, array $options)
     {
         if (!isset($options['name'])) {
@@ -139,7 +140,7 @@ class Router implements RouterInterface
                 //       does not allow empty paths as valid relative URI, needs
                 //       to be fixed.
                 // @see  https://github.com/zendframework/zf2/issues/5563
-                $uri->setPath($this->baseUri->getPath() . $uri->getPath());
+                $uri->setPath($this->baseUri->getPath());
             }
         }
 

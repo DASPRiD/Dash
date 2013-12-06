@@ -46,6 +46,9 @@ class RouteCollection implements RouteCollectionInterface
         $this->routeManager = $routeManager;
     }
 
+    /**
+     * @throws Exception\InvalidArgumentException
+     */
     public function insert($name, $route, $priority = 1)
     {
         if (!($route instanceof RouteInterface || is_array($route))) {
@@ -57,7 +60,7 @@ class RouteCollection implements RouteCollectionInterface
 
         $this->sorted = false;
 
-        // Note: the order of the lements in the array are important for the
+        // Note: the order of the elements in the array are important for the
         // sorting to work, do not change!
         $this->routes[$name] = [
             'priority' => (int) $priority,
