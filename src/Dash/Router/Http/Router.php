@@ -67,6 +67,7 @@ class Router implements RouterInterface
     public function setBaseUri(HttpUri $uri)
     {
         $this->baseUri = $uri->normalize();
+        $this->baseUri->setPath(rtrim($this->baseUri->getPath(), '/'));
     }
 
     public function match(RequestInterface $request)
@@ -90,7 +91,7 @@ class Router implements RouterInterface
             $this->baseUri->normalize();
         }
 
-        $basePathLength = strlen($this->baseUri->getPath());
+        $basePathLength = $this->baseUri->getPath() === '/' ? 0 : strlen($this->baseUri->getPath());
 
         /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
@@ -134,7 +135,7 @@ class Router implements RouterInterface
                 //       does not allow empty paths as valid relative URI, needs
                 //       to be fixed.
                 // @see  https://github.com/zendframework/zf2/issues/5563
-                $uri->setPath($this->baseUri->getPath());
+                $uri->setPath($this->baseUri->getPath() ?: '/');
             }
         }
 

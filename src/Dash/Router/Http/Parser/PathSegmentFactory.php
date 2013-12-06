@@ -24,7 +24,7 @@ class PathSegmentFactory implements FactoryInterface, MutableCreationOptionsInte
     /**
      * @var array
      */
-    protected static $instances = [];
+    protected $instances = [];
 
     /**
      * @var null|array
@@ -45,10 +45,10 @@ class PathSegmentFactory implements FactoryInterface, MutableCreationOptionsInte
         $constraints = (isset($this->createOptions['constraints']) ? $this->createOptions['constraints'] : []);
         $key         = serialize([$pattern, $constraints]);
 
-        if (!isset(static::$instances[$key])) {
-            static::$instances[$key] = new Segment('/', $pattern, $constraints);
+        if (!isset($this->instances[$key])) {
+            $this->instances[$key] = new Segment('/', $pattern, $constraints);
         }
 
-        return static::$instances[$key];
+        return $this->instances[$key];
     }
 }
