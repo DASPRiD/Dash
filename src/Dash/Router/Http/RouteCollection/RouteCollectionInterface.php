@@ -9,6 +9,7 @@
 
 namespace Dash\Router\Http\RouteCollection;
 
+use Dash\Router\Exception;
 use Dash\Router\Http\Route\RouteInterface;
 use Iterator;
 
@@ -49,6 +50,7 @@ interface RouteCollectionInterface extends Iterator
      *
      * @param  string $name
      * @return null|RouteInterface
+     * @throws Exception\OutOfBoundsException
      */
     public function get($name);
 }

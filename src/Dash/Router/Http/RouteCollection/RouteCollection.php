@@ -88,7 +88,7 @@ class RouteCollection implements RouteCollectionInterface
     public function get($name)
     {
         if (!isset($this->routes[$name])) {
-            return null;
+            throw new Exception\OutOfBoundsException(sprintf('Route with name "%s" was not found', $name));
         }
 
         $route = $this->routes[$name]['route'];
@@ -97,7 +97,6 @@ class RouteCollection implements RouteCollectionInterface
             $type  = (!isset($route['type']) ? 'generic' : $route['type']);
             $route = $this->routes[$name]['route'] = $this->routeManager->get($type, $route);
         }
-
 
         return $route;
     }

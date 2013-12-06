@@ -116,13 +116,7 @@ class Router implements RouterInterface
         $parentName = $nameParts[0];
         $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
-        $route = $this->routeCollection->get($parentName);
-
-        if ($route === null) {
-            throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $parentName));
-        }
-
-        $uri = $route->assemble(clone $this->baseUri, $params, $childName);
+        $uri = $this->routeCollection->get($parentName)->assemble(clone $this->baseUri, $params, $childName);
 
         if (isset($options['query'])) {
             $uri->setQuery($options['query']);

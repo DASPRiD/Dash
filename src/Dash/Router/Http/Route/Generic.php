@@ -234,13 +234,7 @@ class Generic implements RouteInterface
                 throw new Exception\RuntimeException('Route has no children to assemble');
             }
 
-            $route = $this->children->get($parentName);
-
-            if ($route === null) {
-                throw new Exception\RuntimeException(sprintf('Route with name "%s" was not found', $parentName));
-            }
-
-            $uri = $route->assemble($uri, $params, $childName);
+            $uri = $this->children->get($parentName)->assemble($uri, $params, $childName);
         }
 
         return $uri;
