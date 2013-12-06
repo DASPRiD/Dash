@@ -267,13 +267,6 @@ class GenericTest extends TestCase
         $this->route->assemble(new HttpUri(), [], 'foo');
     }
 
-    public function testAssembleFailsWithoutFindingChild()
-    {
-        $this->setExpectedException('Dash\Router\Exception\RuntimeException', 'Route with name "foo" was not found');
-        $this->route->setChildren($this->getRouteCollection());
-        $this->route->assemble(new HttpUri(), [], 'foo');
-    }
-
     public function testAssemblePassesDownChildName()
     {
         $child = $this->getMock('Dash\Router\Http\Route\RouteInterface');

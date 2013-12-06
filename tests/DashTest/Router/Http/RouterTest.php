@@ -86,15 +86,6 @@ class RouterTest extends TestCase
         $router->assemble([], []);
     }
 
-    public function testAssembleFailsWithoutFindingRoute()
-    {
-        $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
-        $router          = new Router($routeCollection);
-
-        $this->setExpectedException('Dash\Router\Exception\RuntimeException', 'Route with name "foo" was not found');
-        $router->assemble([], ['name' => 'foo']);
-    }
-
     public function testAssemblePassesDownChildName()
     {
         $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
