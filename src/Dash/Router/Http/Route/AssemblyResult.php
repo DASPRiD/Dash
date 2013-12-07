@@ -27,6 +27,24 @@ namespace Dash\Router\Http\Route;
 class AssemblyResult
 {
     /**
+     * These characters are allowed within a path and should not be encoded.
+     *
+     * @var array
+     */
+    protected static $allowedPathChars = [
+        '%2F' => '/',
+        '%40' => '@',
+        '%3A' => ':',
+        '%3B' => ';',
+        '%2C' => ',',
+        '%3D' => '=',
+        '%2B' => '+',
+        '%21' => '!',
+        '%2A' => '*',
+        '%7C' => '|',
+    ];
+
+    /**
      * @var null|string
      */
     protected $scheme;
@@ -126,10 +144,10 @@ class AssemblyResult
             $url .= '//' . ($this->host ?: $referenceHost);
         }
 
-        $url .= $this->path;
+        $url .= strtr(rawurlencode($this->path), static::$allowedPathChars);
 
         if ($this->query !== null) {
-            $url .= '?' . http_build_query($this->query);
+            $url .= '?' . http_build_query($this->query, '', '&');
         }
 
         if ($this->fragment !== null) {
