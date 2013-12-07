@@ -10,7 +10,7 @@
 namespace Dash\Router\Http\Parser;
 
 /**
- * A generic parse reuslt which is returned by parsers.
+ * A generic parse result which is returned by parsers.
  */
 class ParseResult
 {

@@ -224,9 +224,9 @@ class GenericTest extends TestCase
     public function testAssembleSecureSchema()
     {
         $this->route->setSecure(true);
-        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), []);
+        $assemblyResult = $this->route->assemble([]);
 
-        $this->assertEquals('https://example.com/foo', $uri->toString());
+        $this->assertEquals('https:', $assemblyResult->toString('http', 'example.com', false));
     }
 
     public function testAssembleHostname()
@@ -240,9 +240,9 @@ class GenericTest extends TestCase
 
         $this->route->setHostnameParser($parser);
         $this->route->setDefaults(['baz' => 'bat']);
-        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), ['foo' => 'bar']);
+        $assemblyResult = $this->route->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('http://example.org/foo', $uri->toString());
+        $this->assertEquals('//example.org', $assemblyResult->toString('http', 'example.com', false));
     }
 
     public function testAssemblePath()
@@ -256,15 +256,15 @@ class GenericTest extends TestCase
 
         $this->route->setPathParser($parser);
         $this->route->setDefaults(['baz' => 'bat']);
-        $uri = $this->route->assemble(new HttpUri('http://example.com/foo'), ['foo' => 'bar']);
+        $assemblyResult = $this->route->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('http://example.com/foo/bar', $uri->toString());
+        $this->assertEquals('/bar', $assemblyResult->toString('http', 'example.com', false));
     }
 
     public function testAssembleFailsWithoutChildren()
     {
         $this->setExpectedException('Dash\Router\Exception\RuntimeException', 'Route has no children to assemble');
-        $this->route->assemble(new HttpUri(), [], 'foo');
+        $this->route->assemble([], 'foo');
     }
 
     public function testAssemblePassesDownChildName()
@@ -273,13 +273,13 @@ class GenericTest extends TestCase
         $child
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo('bar'));
+            ->with($this->anything(), $this->equalTo('bar'));
 
         $routeCollection = $this->getRouteCollection();
         $routeCollection->insert('foo', $child);
 
         $this->route->setChildren($routeCollection);
-        $this->route->assemble(new HttpUri(), [], 'foo/bar');
+        $this->route->assemble([], 'foo/bar');
     }
 
     public function testAssemblePassesNullWithoutFurtherChildren()
@@ -288,13 +288,13 @@ class GenericTest extends TestCase
         $child
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo(null));
+            ->with($this->anything(), $this->equalTo(null));
 
         $routeCollection = $this->getRouteCollection();
         $routeCollection->insert('foo', $child);
 
         $this->route->setChildren($routeCollection);
-        $this->route->assemble(new HttpUri(), [], 'foo');
+        $this->route->assemble([], 'foo');
     }
 
     public function testAssembleIgnoresTrailingSlash()
@@ -303,13 +303,13 @@ class GenericTest extends TestCase
         $child
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo(null));
+            ->with($this->anything(), $this->equalTo(null));
 
         $routeCollection = $this->getRouteCollection();
         $routeCollection->insert('foo', $child);
 
         $this->route->setChildren($routeCollection);
-        $this->route->assemble(new HttpUri(), [], 'foo/');
+        $this->route->assemble([], 'foo/');
     }
 
     /**
