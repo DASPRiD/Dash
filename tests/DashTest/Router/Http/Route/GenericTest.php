@@ -226,7 +226,7 @@ class GenericTest extends TestCase
         $this->route->setSecure(true);
         $assemblyResult = $this->route->assemble([]);
 
-        $this->assertEquals('https:', $assemblyResult->toString('http', 'example.com', false));
+        $this->assertEquals('https:', $assemblyResult->generateUri('http', 'example.com', false));
     }
 
     public function testAssembleHostname()
@@ -242,7 +242,7 @@ class GenericTest extends TestCase
         $this->route->setDefaults(['baz' => 'bat']);
         $assemblyResult = $this->route->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('//example.org', $assemblyResult->toString('http', 'example.com', false));
+        $this->assertEquals('//example.org', $assemblyResult->generateUri('http', 'example.com', false));
     }
 
     public function testAssemblePath()
@@ -258,7 +258,7 @@ class GenericTest extends TestCase
         $this->route->setDefaults(['baz' => 'bat']);
         $assemblyResult = $this->route->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('/bar', $assemblyResult->toString('http', 'example.com', false));
+        $this->assertEquals('/bar', $assemblyResult->generateUri('http', 'example.com', false));
     }
 
     public function testAssembleFailsWithoutChildren()

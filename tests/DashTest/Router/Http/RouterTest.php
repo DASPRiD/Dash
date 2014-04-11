@@ -146,7 +146,7 @@ class RouterTest extends TestCase
             ->method('assemble')
             ->will($this->returnCallback(function () {
                 $assemblyResult = new AssemblyResult();
-                $assemblyResult->setHost('example.org');
+                $assemblyResult->host = 'example.org';
                 return $assemblyResult;
             }));
 

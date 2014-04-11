@@ -12,9 +12,9 @@ namespace Dash\Router\Http\Route;
 /**
  * A generic assembly result which is returned by assemble methods.
  *
- * We are not using Zend\Uri here for performance reasons. All the normalization
- * going on in Zend\Uri have a huge performance impact and are not required
- * for simple assembling.
+ * {@internal We are not using Zend\Uri for performance reasons. All the
+ * normalization going on in Zend\Uri have a huge performance impact and are not
+ * required for simple assembling.
  *
  * There is no validation done in this class, as it is assumed that someone who
  * writes custom route classes actually knows what one is doing. We only take
@@ -22,7 +22,7 @@ namespace Dash\Router\Http\Route;
  *
  * Seriously, consider twice before tweaking this class, as it is quite
  * performance-critical to assembling. Any changes should be backed by proper
- * benchmarks.
+ * benchmarks.}}
  */
 class AssemblyResult
 {
@@ -47,77 +47,27 @@ class AssemblyResult
     /**
      * @var null|string
      */
-    protected $scheme;
+    public $scheme;
 
     /**
      * @var null|string
      */
-    protected $host;
+    public $host;
 
     /**
      * @var null|string
      */
-    protected $path;
+    public $path;
 
     /**
      * @var null|array
      */
-    protected $query;
+    public $query;
 
     /**
      * @var null|string
      */
-    protected $fragment;
-
-    /**
-     * Sets the scheme.
-     *
-     * @param string $scheme
-     */
-    public function setScheme($scheme)
-    {
-        $this->scheme = $scheme;
-    }
-
-    /**
-     * Sets the host.
-     *
-     * @param string $host
-     */
-    public function setHost($host)
-    {
-        $this->host = $host;
-    }
-
-    /**
-     * Prepends a path to an already set one.
-     *
-     * @param string $path
-     */
-    public function prependPath($path)
-    {
-        $this->path = $path . $this->path;
-    }
-
-    /**
-     * Sets the query.
-     *
-     * @param array $query
-     */
-    public function setQuery(array $query)
-    {
-        $this->query = $query;
-    }
-
-    /**
-     * Sets the fragment.
-     *
-     * @param string $fragment
-     */
-    public function setFragment($fragment)
-    {
-        $this->fragment = $fragment;
-    }
+    public $fragment;
 
     /**
      * Converts the assembly result to a string.
@@ -132,7 +82,7 @@ class AssemblyResult
      * @param  bool   $forceCanonical
      * @return string
      */
-    public function toString($referenceScheme, $referenceHost, $forceCanonical)
+    public function generateUri($referenceScheme, $referenceHost, $forceCanonical)
     {
         $url = '';
 

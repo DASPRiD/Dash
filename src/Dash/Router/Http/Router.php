@@ -118,17 +118,17 @@ class Router implements RouterInterface
         $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
         $assemblyResult = $this->routeCollection->get($parentName)->assemble($params, $childName);
-        $assemblyResult->prependPath($this->baseUri->getPath());
+        $assemblyResult->path = $this->baseUri->getPath() . $assemblyResult->path;
 
         if (isset($options['query'])) {
-            $assemblyResult->setQuery($options['query']);
+            $assemblyResult->query = $options['query'];
         }
 
         if (isset($options['fragment'])) {
-            $assemblyResult->setFragment($options['fragment']);
+            $assemblyResult->fragment = $options['fragment'];
         }
 
-        return $assemblyResult->toString(
+        return $assemblyResult->generateUri(
             $this->baseUri->getScheme(),
             $this->baseUri->getHost(),
             (isset($options['force_canonical']) && $options['force_canonical'])

@@ -14,7 +14,6 @@ use Dash\Router\Http\Parser\ParserInterface;
 use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Zend\Http\Request as HttpRequest;
-use Zend\Uri\Http as HttpUri;
 
 /**
  * A generic route which takes care of all HTTP aspects.
@@ -228,15 +227,15 @@ class Generic implements RouteInterface
         }
 
         if ($this->secure) {
-            $assemblyResult->setScheme('https');
+            $assemblyResult->scheme = 'https';
         }
 
         if ($this->hostnameParser !== null) {
-            $assemblyResult->setHost($this->hostnameParser->compile($params, $this->defaults));
+            $assemblyResult->host = $this->hostnameParser->compile($params, $this->defaults);
         }
 
         if ($this->pathParser !== null) {
-            $assemblyResult->prependPath($this->pathParser->compile($params, $this->defaults));
+            $assemblyResult->path = $this->pathParser->compile($params, $this->defaults) . $assemblyResult->path;
         }
 
         return $assemblyResult;
