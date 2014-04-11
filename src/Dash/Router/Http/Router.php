@@ -117,28 +117,21 @@ class Router implements RouterInterface
         $parentName = $nameParts[0];
         $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
-        $uri = $this->routeCollection->get($parentName)->assemble(clone $this->baseUri, $params, $childName);
+        $assemblyResult = $this->routeCollection->get($parentName)->assemble($params, $childName);
+        $assemblyResult->path = $this->baseUri->getPath() . $assemblyResult->path;
 
         if (isset($options['query'])) {
-            $uri->setQuery($options['query']);
+            $assemblyResult->query = $options['query'];
         }
 
         if (isset($options['fragment'])) {
-            $uri->setFragment($options['fragment']);
+            $assemblyResult->fragment = $options['fragment'];
         }
 
-        if (!isset($options['force_canonical']) || !$options['force_canonical']) {
-            $uri->makeRelative($this->baseUri);
-
-            if ($uri->getPath() === '') {
-                // @todo This is just a workaround for now, as Zend\Uri\Http
-                //       does not allow empty paths as valid relative URI, needs
-                //       to be fixed.
-                // @see  https://github.com/zendframework/zf2/issues/5563
-                $uri->setPath($this->baseUri->getPath() ?: '/');
-            }
-        }
-
-        return $uri->normalize()->toString();
+        return $assemblyResult->generateUri(
+            $this->baseUri->getScheme(),
+            $this->baseUri->getHost(),
+            (isset($options['force_canonical']) && $options['force_canonical'])
+        );
     }
 }

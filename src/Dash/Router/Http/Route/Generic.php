@@ -14,7 +14,6 @@ use Dash\Router\Http\Parser\ParserInterface;
 use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Zend\Http\Request as HttpRequest;
-use Zend\Uri\Http as HttpUri;
 
 /**
  * A generic route which takes care of all HTTP aspects.
@@ -211,20 +210,8 @@ class Generic implements RouteInterface
     /**
      * @throws Exception\RuntimeException
      */
-    public function assemble(HttpUri $uri, array $params, $childName = null)
+    public function assemble(array $params, $childName = null)
     {
-        if ($this->secure) {
-            $uri->setScheme('https');
-        }
-
-        if ($this->hostnameParser !== null) {
-            $uri->setHost($this->hostnameParser->compile($params, $this->defaults));
-        }
-
-        if ($this->pathParser !== null) {
-            $uri->setPath($uri->getPath() . $this->pathParser->compile($params, $this->defaults));
-        }
-
         if ($childName !== null) {
             $nameParts  = explode('/', $childName, 2);
             $parentName = $nameParts[0];
@@ -234,9 +221,23 @@ class Generic implements RouteInterface
                 throw new Exception\RuntimeException('Route has no children to assemble');
             }
 
-            $uri = $this->children->get($parentName)->assemble($uri, $params, $childName);
+            $assemblyResult = $this->children->get($parentName)->assemble($params, $childName);
+        } else {
+            $assemblyResult = new AssemblyResult();
         }
 
-        return $uri;
+        if ($this->secure) {
+            $assemblyResult->scheme = 'https';
+        }
+
+        if ($this->hostnameParser !== null) {
+            $assemblyResult->host = $this->hostnameParser->compile($params, $this->defaults);
+        }
+
+        if ($this->pathParser !== null) {
+            $assemblyResult->path = $this->pathParser->compile($params, $this->defaults) . $assemblyResult->path;
+        }
+
+        return $assemblyResult;
     }
 }

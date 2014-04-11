@@ -9,6 +9,7 @@
 
 namespace DashTest\Router\Http;
 
+use Dash\Router\Http\Route\AssemblyResult;
 use Dash\Router\Http\RouteCollection\RouteCollection;
 use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\Router;
@@ -92,10 +93,8 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo('bar'))
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->with($this->anything(), $this->equalTo('bar'))
+            ->will($this->returnValue(new AssemblyResult()));
 
         $router = $this->getAssemblyRouter($route);
         $router->assemble([], ['name' => 'foo/bar']);
@@ -107,10 +106,8 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo(null))
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->with($this->anything(), $this->equalTo(null))
+            ->will($this->returnValue(new AssemblyResult()));
 
         $router = $this->getAssemblyRouter($route);
         $router->assemble([], ['name' => 'foo']);
@@ -122,10 +119,8 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->with($this->anything(), $this->anything(), $this->equalTo(null))
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->with($this->anything(), $this->equalTo(null))
+            ->will($this->returnValue(new AssemblyResult()));
 
         $router = $this->getAssemblyRouter($route);
         $router->assemble([], ['name' => 'foo/']);
@@ -137,9 +132,7 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->will($this->returnValue(new AssemblyResult()));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('/foo', $router->assemble([], ['name' => 'foo']));
@@ -151,25 +144,24 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                $uri->setHost('example.org');
-                return $uri;
+            ->will($this->returnCallback(function () {
+                $assemblyResult = new AssemblyResult();
+                $assemblyResult->host = 'example.org';
+                return $assemblyResult;
             }));
 
         $router = $this->getAssemblyRouter($route);
 
-        $this->assertEquals('http://example.org/foo', $router->assemble([], ['name' => 'foo']));
+        $this->assertEquals('//example.org/foo', $router->assemble([], ['name' => 'foo']));
     }
 
     public function testAssembleReturnsCanonicalUriWhenForced()
     {
-        $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->will($this->returnValue(new AssemblyResult()));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('http://example.com/foo', $router->assemble([], ['name' => 'foo', 'force_canonical' => true]));
@@ -177,13 +169,11 @@ class RouterTest extends TestCase
 
     public function testAssembleQuery()
     {
-        $route  = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->will($this->returnValue(new AssemblyResult()));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('/foo?foo=bar', $router->assemble([], ['name' => 'foo', 'query' => ['foo' => 'bar']]));
@@ -195,9 +185,7 @@ class RouterTest extends TestCase
         $route
             ->expects($this->once())
             ->method('assemble')
-            ->will($this->returnCallback(function (HttpUri $uri) {
-                return $uri;
-            }));
+            ->will($this->returnValue(new AssemblyResult()));
         $router = $this->getAssemblyRouter($route);
 
         $this->assertEquals('/foo#foo', $router->assemble([], ['name' => 'foo', 'fragment' => 'foo']));
