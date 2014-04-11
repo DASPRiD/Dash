@@ -15,7 +15,6 @@ use Dash\Router\Http\RouteCollection\RouteCollection;
 use Dash\Router\Http\RouteMatch;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Http\Request;
-use Zend\Uri\Http as HttpUri;
 
 /**
  * @covers Dash\Router\Http\Route\Generic
