@@ -9,9 +9,8 @@
 
 namespace Dash\Router\Http\Route;
 
-use Dash\Router\Http\RouteMatch;
+use Dash\Router\MatchResult;
 use Zend\Http\Request as HttpRequest;
-use Zend\Uri\Http as HttpUri;
 
 /**
  * Interface every HTTP route must implement.
@@ -23,7 +22,7 @@ interface RouteInterface
      *
      * @param  HttpRequest $request
      * @param  int         $pathOffset
-     * @return null|RouteMatch
+     * @return null|MatchResult
      */
     public function match(HttpRequest $request, $pathOffset);
 

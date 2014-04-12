@@ -64,11 +64,12 @@ class RouterFactoryTest extends TestCase
             ->method('getUri')
             ->will($this->returnValue(new HttpUri('http://example.com/foo/user/edit/1')));
 
-        $match = $router->match($request);
+        $matchResult = $router->match($request);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
-        $this->assertEquals('user/edit', $match->getRouteName());
-        $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
+        $this->assertInstanceOf('Dash\Router\MatchResult', $matchResult);
+        $this->assertTrue($matchResult->hasRouteMatch());
+        $this->assertEquals('user/edit', $matchResult->getRouteMatch()->getRouteName());
+        $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $matchResult->getRouteMatch()->getParams());
     }
 
     /**

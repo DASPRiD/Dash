@@ -95,9 +95,12 @@ class Router implements RouterInterface
 
         /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
-            if (null !== ($routeMatch = $route->match($request, $basePathLength))) {
-                $routeMatch->prependRouteName($name);
-                return $routeMatch;
+            if (null !== ($matchResult = $route->match($request, $basePathLength))) {
+                if ($matchResult->hasRouteMatch()) {
+                    $matchResult->getRouteMatch()->prependRouteName($name);
+                }
+
+                return $matchResult;
             }
         }
 

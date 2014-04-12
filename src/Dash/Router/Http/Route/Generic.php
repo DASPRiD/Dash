@@ -13,6 +13,7 @@ use Dash\Router\Exception;
 use Dash\Router\Http\Parser\ParserInterface;
 use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
+use Dash\Router\MatchResult;
 use Zend\Http\Request as HttpRequest;
 
 /**
@@ -167,19 +168,19 @@ class Generic implements RouteInterface
         }
 
         // Looks good so far, let's create a route match.
-        $match = new RouteMatch($this->defaults);
+        $routeMatch = new RouteMatch($this->defaults);
 
         if (isset($hostnameResult)) {
-            $match->addParseResult($hostnameResult);
+            $routeMatch->addParseResult($hostnameResult);
         }
 
         if (isset($pathResult)) {
-            $match->addParseResult($pathResult);
+            $routeMatch->addParseResult($pathResult);
         }
 
         if ($completePathMatched) {
             if ($this->methods === '*' || isset($this->methods[$request->getMethod()])) {
-                return $match;
+                return new MatchResult($routeMatch);
             }
 
             return null;
@@ -190,21 +191,26 @@ class Generic implements RouteInterface
             return null;
         }
 
-        $childMatch = null;
+        $childRouteMatch = null;
 
         foreach ($this->children as $childName => $childRoute) {
-            if (null !== ($childMatch = $childRoute->match($request, $pathOffset))) {
-                $childMatch->prependRouteName($childName);
+            if (null !== ($childMatchResult = $childRoute->match($request, $pathOffset))) {
+                if ($childMatchResult->hasResponse()) {
+                    return $childMatchResult;
+                }
+
+                $childRouteMatch = $childMatchResult->getRouteMatch();
+                $childRouteMatch->prependRouteName($childName);
                 break;
             }
         }
 
-        if ($childMatch === null) {
+        if ($childRouteMatch === null) {
             return null;
         }
 
-        $match->merge($childMatch);
-        return $match;
+        $routeMatch->merge($childRouteMatch);
+        return new MatchResult($routeMatch);
     }
 
     /**

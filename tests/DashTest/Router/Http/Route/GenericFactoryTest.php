@@ -45,7 +45,7 @@ class GenericFactoryTest extends TestCase
         ]);
 
         $route = $factory->createService($this->getRouteManager());
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $route->match($this->getHttpRequest(), 0));
+        $this->assertInstanceOf('Dash\Router\MatchResult', $route->match($this->getHttpRequest(), 0));
     }
 
     public function testPathOverwritesParameter()
@@ -64,7 +64,7 @@ class GenericFactoryTest extends TestCase
             'path' => '/foo',
         ]);
         $route = $factory->createService($this->getRouteManager());
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $route->match($this->getHttpRequest(), 0));
+        $this->assertInstanceOf('Dash\Router\MatchResult', $route->match($this->getHttpRequest(), 0));
     }
 
     public function testFactoryWithSpecifiedParsers()
@@ -78,7 +78,7 @@ class GenericFactoryTest extends TestCase
         ]);
 
         $route = $factory->createService($this->getRouteManager());
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $route->match($this->getHttpRequest(), 0));
+        $this->assertInstanceOf('Dash\Router\MatchResult', $route->match($this->getHttpRequest(), 0));
     }
 
     protected function getHttpRequest()

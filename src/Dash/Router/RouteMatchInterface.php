@@ -10,7 +10,7 @@
 namespace Dash\Router;
 
 /**
- * Interface describing matches which are returned by routers.
+ * Interface describing matches which are contained in MatchResults.
  */
 interface RouteMatchInterface
 {

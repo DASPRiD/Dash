@@ -13,6 +13,7 @@ use Dash\Router\Http\Route\AssemblyResult;
 use Dash\Router\Http\RouteCollection\RouteCollection;
 use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\Router;
+use Dash\Router\MatchResult;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Uri\Http as HttpUri;
 
@@ -59,23 +60,23 @@ class RouterTest extends TestCase
 
     public function testRouteMatchIsReturned()
     {
-        $routeCollection    = new RouteCollection($this->getMock('Zend\ServiceManager\ServiceLocatorInterface'));
-        $router             = new Router($routeCollection);
-        $request            = $this->getHttpRequest();
-        $expectedRouteMatch = new RouteMatch();
+        $routeCollection     = new RouteCollection($this->getMock('Zend\ServiceManager\ServiceLocatorInterface'));
+        $router              = new Router($routeCollection);
+        $request             = $this->getHttpRequest();
+        $expectedMatchResult = new MatchResult(new RouteMatch());
 
         $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
         $route
             ->expects($this->once())
             ->method('match')
             ->with($this->equalTo($request))
-            ->will($this->returnValue($expectedRouteMatch));
+            ->will($this->returnValue($expectedMatchResult));
 
         $routeCollection->insert('foo', $route);
 
-        $routeMatch = $router->match($request);
-        $this->assertSame($expectedRouteMatch, $routeMatch);
-        $this->assertEquals('foo', $routeMatch->getRouteName());
+        $matchResult = $router->match($request);
+        $this->assertSame($expectedMatchResult, $matchResult);
+        $this->assertEquals('foo', $matchResult->getRouteMatch()->getRouteName());
     }
 
     public function testAssembleFailsWithoutRouteName()

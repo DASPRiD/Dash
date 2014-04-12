@@ -23,12 +23,14 @@ interface RouterInterface
      * not be matched otherwise, null should be returned.
      *
      * @param  RequestInterface $request
-     * @return null|RouteMatchInterface
+     * @return null|MatchResult
      */
     public function match(RequestInterface $request);
 
     /**
      * Assembles a response.
+     *
+     * The return type is specific to router implementation.
      *
      * @param  array $params
      * @param  array $options
