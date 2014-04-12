@@ -206,15 +206,15 @@ class GenericTest extends TestCase
     {
         $routeCollection = $this->getRouteCollection();
 
-        $childMatch = new RouteMatch();
-        $childMatch->setParam('baz', 'bat');
+        $childRouteMatch = new RouteMatch();
+        $childRouteMatch->setParam('baz', 'bat');
 
         $childRoute = $this->getMock('Dash\Router\Http\Route\RouteInterface');
         $childRoute
             ->expects($this->once())
             ->method('match')
             ->with($this->equalTo($this->request), $this->equalTo(5))
-            ->will($this->returnValue(new MatchResult($childMatch)));
+            ->will($this->returnValue(new MatchResult($childRouteMatch)));
 
         $routeCollection->insert('child', $childRoute);
 
@@ -225,6 +225,28 @@ class GenericTest extends TestCase
         $this->assertInstanceOf('Dash\Router\MatchResult', $matchResult);
         $this->assertTrue($matchResult->hasRouteMatch());
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getRouteMatch()->getParams());
+    }
+
+    public function testChildReturningResponseBubblesUp()
+    {
+        $routeCollection = $this->getRouteCollection();
+
+        $childMatchResult = new MatchResult($this->getMock('Zend\Stdlib\ResponseInterface'));
+
+        $childRoute = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $childRoute
+            ->expects($this->once())
+            ->method('match')
+            ->will($this->returnValue($childMatchResult));
+
+        $routeCollection->insert('child', $childRoute);
+
+        $this->route->setChildren($routeCollection);
+        $this->route->setPathParser($this->getIncompletePathParser());
+        $matchResult = $this->route->match($this->request, 4);
+
+        $this->assertSame($childMatchResult, $matchResult);
+        $this->assertTrue($matchResult->hasResponse());
     }
 
     public function testAssembleSecureSchema()
