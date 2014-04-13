@@ -20,12 +20,12 @@ use Zend\Stdlib\ResponseInterface;
 class MatchResult
 {
     /**
-     * @var Zend\Stdlib\ResponseInterface
+     * @var Zend\Stdlib\ResponseInterface|null
      */
     protected $response;
 
     /**
-     * @var RouteMatchInterface
+     * @var RouteMatchInterface|null
      */
     protected $routeMatch;
 
@@ -63,7 +63,7 @@ class MatchResult
     }
 
     /**
-     * @return ResponseInterface
+     * @return ResponseInterface|null
      */
     public function getResponse()
     {
@@ -71,7 +71,7 @@ class MatchResult
     }
 
     /**
-     * @return RouteMatchInterface
+     * @return RouteMatchInterface|null
      */
     public function getRouteMatch()
     {
