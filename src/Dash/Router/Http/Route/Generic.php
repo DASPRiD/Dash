@@ -10,8 +10,10 @@
 namespace Dash\Router\Http\Route;
 
 use Dash\Router\Exception;
+use Dash\Router\Http\MatchResult\DisallowedMethod;
+use Dash\Router\Http\MatchResult\DisallowedScheme;
+use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Parser\ParserInterface;
-use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
 use Zend\Http\Request as HttpRequest;
 
@@ -69,12 +71,14 @@ class Generic implements RouteInterface
         $this->methods = [];
 
         if (is_string($methods)) {
-            if ($methods === '' || $methods === '*') {
+            if ($methods === '') {
+                $methods = [];
+            } elseif ($methods === '*') {
                 $this->methods = $methods;
                 return;
+            } else {
+                $methods = (array) $methods;
             }
-
-            $methods = (array) $methods;
         } elseif (!is_array($methods)) {
             throw new Exception\InvalidArgumentException('$methods must either be a string or an array');
         }
@@ -142,7 +146,9 @@ class Generic implements RouteInterface
 
         // Verify scheme first, if set.
         if ($this->secure && $uri->getScheme() !== 'https') {
-            return null;
+            $allowedUri = clone $uri;
+            $allowedUri->setScheme('https');
+            return new DisallowedScheme($allowedUri->toString());
         }
 
         // Then match hostname, if parser is set.
@@ -166,8 +172,8 @@ class Generic implements RouteInterface
             $completePathMatched = ($pathOffset === strlen($uri->getPath()));
         }
 
-        // Looks good so far, let's create a route match.
-        $match = new RouteMatch($this->defaults);
+        // Looks good so far, let's create a match.
+        $match = new SuccessfulMatch($this->defaults);
 
         if (isset($hostnameResult)) {
             $match->addParseResult($hostnameResult);
@@ -182,7 +188,7 @@ class Generic implements RouteInterface
                 return $match;
             }
 
-            return null;
+            return new DisallowedMethod(array_keys($this->methods));
         }
 
         // The path was not completely matched yet, so we check the children.
@@ -190,13 +196,33 @@ class Generic implements RouteInterface
             return null;
         }
 
-        $childMatch = null;
+        $disallowedMethodResult = null;
+        $disallowedSchemeResult = null;
+        $childMatch             = null;
 
         foreach ($this->children as $childName => $childRoute) {
             if (null !== ($childMatch = $childRoute->match($request, $pathOffset))) {
-                $childMatch->prependRouteName($childName);
+                if ($childMatch instanceof SuccessfulMatch) {
+                    $childMatch->prependRouteName($childName);
+                } elseif ($childMatch instanceof DisallowedMethod) {
+                    if ($disallowedMethodResult === null) {
+                        $disallowedMethodResult = $childMatch;
+                    } else {
+                        $disallowedMethodResult->merge($childMatch);
+                    }
+                } elseif ($childMatch instanceof DisallowedScheme) {
+                    $disallowedSchemeResult = $childMatch;
+                }
                 break;
             }
+        }
+
+        if ($disallowedSchemeResult !== null) {
+            return $disallowedSchemeResult;
+        }
+
+        if ($disallowedMethodResult !== null) {
+            return $disallowedMethodResult;
         }
 
         if ($childMatch === null) {

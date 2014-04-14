@@ -10,8 +10,11 @@
 namespace Dash\Router\Http;
 
 use Dash\Router\Exception;
+use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Route\RouteInterface;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
+use Dash\Router\MatchResult\UnsuccessfulMatch;
+use Dash\Router\MatchResult\UnsupportedRequest;
 use Dash\Router\RouterInterface;
 use Zend\Http\Request as HttpRequest;
 use Zend\Stdlib\RequestInterface;
@@ -73,7 +76,7 @@ class Router implements RouterInterface
     public function match(RequestInterface $request)
     {
         if (!$request instanceof HttpRequest) {
-            return null;
+            return new UnsupportedRequest();
         }
 
         if ($this->baseUri === null) {
@@ -95,13 +98,16 @@ class Router implements RouterInterface
 
         /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
-            if (null !== ($routeMatch = $route->match($request, $basePathLength))) {
-                $routeMatch->prependRouteName($name);
-                return $routeMatch;
+            if (null !== ($matchResult = $route->match($request, $basePathLength))) {
+                if ($matchResult instanceof SuccessfulMatch) {
+                    $matchResult->prependRouteName($name);
+                }
+
+                return $matchResult;
             }
         }
 
-        return null;
+        return new UnsuccessfulMatch();
     }
 
     /**

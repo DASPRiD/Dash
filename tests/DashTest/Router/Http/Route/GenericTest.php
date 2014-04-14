@@ -9,10 +9,10 @@
 
 namespace DashTest\Router\Http\Route;
 
+use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Parser\ParseResult;
 use Dash\Router\Http\Route\Generic;
 use Dash\Router\Http\RouteCollection\RouteCollection;
-use Dash\Router\Http\RouteMatch;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Http\Request;
 
@@ -49,7 +49,7 @@ class GenericTest extends TestCase
         $this->route->setPathParser($this->getSuccessfullPathParser());
         $match = $this->route->match($this->request, 4);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar'], $match->getParams());
     }
 
@@ -78,7 +78,7 @@ class GenericTest extends TestCase
         $this->route->setHostnameParser($this->getSuccessfullHostnameParser());
         $match = $this->route->match($this->request, 4);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
     }
 
@@ -129,14 +129,20 @@ class GenericTest extends TestCase
 
         $this->route->setPathParser($pathParser);
         $this->route->setSecure(true);
-        $this->assertNull($this->route->match($this->request, 0));
+
+        $result = $this->route->match($this->request, 0);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\DisallowedScheme', $result);
+        $this->assertEquals('https://example.com/foo/bar', $result->getAllowedUri());
     }
 
     public function testNoMatchWithWrongMethod()
     {
         $this->route->setPathParser($this->getSuccessfullPathParser());
         $this->route->setMethods('post');
-        $this->assertNull($this->route->match($this->request, 4));
+
+        $result = $this->route->match($this->request, 4);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\DisallowedMethod', $result);
+        $this->assertEquals(['POST'], $result->getAllowedMethods());
     }
 
     public function testMatchWithWildcardMethod()
@@ -145,7 +151,7 @@ class GenericTest extends TestCase
         $this->route->setMethods('*');
         $match = $this->route->match($this->request, 4);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar'], $match->getParams());
     }
 
@@ -155,7 +161,7 @@ class GenericTest extends TestCase
         $this->route->setMethods(['get', 'post']);
         $match = $this->route->match($this->request, 4);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar'], $match->getParams());
     }
 
@@ -165,7 +171,7 @@ class GenericTest extends TestCase
         $this->route->setPathParser($this->getSuccessfullPathParser());
         $match = $this->route->match($this->request, 4);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
     }
 
@@ -200,8 +206,7 @@ class GenericTest extends TestCase
     {
         $routeCollection = $this->getRouteCollection();
 
-        $childMatch = new RouteMatch();
-        $childMatch->setParam('baz', 'bat');
+        $childMatch = new SuccessfulMatch(['baz' => 'bat']);
 
         $childRoute = $this->getMock('Dash\Router\Http\Route\RouteInterface');
         $childRoute
@@ -216,7 +221,7 @@ class GenericTest extends TestCase
         $this->route->setPathParser($this->getIncompletePathParser());
         $match = $this->route->match($this->request, 4);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
     }
 

@@ -9,9 +9,9 @@
 
 namespace DashTest\Router\Http;
 
+use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Route\AssemblyResult;
 use Dash\Router\Http\RouteCollection\RouteCollection;
-use Dash\Router\Http\RouteMatch;
 use Dash\Router\Http\Router;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Uri\Http as HttpUri;
@@ -45,7 +45,7 @@ class RouterTest extends TestCase
         $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
         $router          = new Router($routeCollection);
 
-        $this->assertNull($router->match($this->getMock('Zend\Stdlib\Request')));
+        $this->assertInstanceOf('Dash\Router\MatchResult\UnsupportedRequest', $router->match($this->getMock('Zend\Stdlib\Request')));
     }
 
     public function testMatchSetsBaseUri()
@@ -62,7 +62,7 @@ class RouterTest extends TestCase
         $routeCollection    = new RouteCollection($this->getMock('Zend\ServiceManager\ServiceLocatorInterface'));
         $router             = new Router($routeCollection);
         $request            = $this->getHttpRequest();
-        $expectedRouteMatch = new RouteMatch();
+        $expectedRouteMatch = new SuccessfulMatch();
 
         $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
         $route

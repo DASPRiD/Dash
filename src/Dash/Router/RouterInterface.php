@@ -23,7 +23,7 @@ interface RouterInterface
      * not be matched otherwise, null should be returned.
      *
      * @param  RequestInterface $request
-     * @return null|RouteMatchInterface
+     * @return MatchResult\MatchResultInterface
      */
     public function match(RequestInterface $request);
 
