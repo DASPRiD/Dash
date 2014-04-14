@@ -12,7 +12,7 @@ namespace Dash\Router\Http\MatchResult;
 use Dash\Router\MatchResult\MatchResultInterface;
 
 /**
- * HTTP specific successful match result.
+ * HTTP specific match result if a scheme is not allowed by a route.
  */
 class DisallowedScheme implements MatchResultInterface
 {
