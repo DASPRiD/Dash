@@ -10,8 +10,12 @@
 namespace Dash\Router\MatchResult;
 
 /**
- * Unspecific match result when the router could not match the request.
+ * Abstrac failed match.
  */
-class UnsuccessfulMatch extends AbstractFailedMatch
+abstract class AbstractFailedMatch implements MatchResultInterface
 {
+    final public function isSuccess()
+    {
+        return false;
+    }
 }

@@ -45,7 +45,9 @@ class RouterTest extends TestCase
         $routeCollection = $this->getMock('Dash\Router\Http\RouteCollection\RouteCollectionInterface');
         $router          = new Router($routeCollection);
 
-        $this->assertInstanceOf('Dash\Router\MatchResult\UnsupportedRequest', $router->match($this->getMock('Zend\Stdlib\Request')));
+        $matchResult = $router->match($this->getMock('Zend\Stdlib\Request'));
+        $this->assertInstanceOf('Dash\Router\MatchResult\UnsupportedRequest', $matchResult);
+        $this->assertEquals('Zend\Http\Request', $matchResult->getSupportedRequestClassName());
     }
 
     public function testMatchSetsBaseUri()

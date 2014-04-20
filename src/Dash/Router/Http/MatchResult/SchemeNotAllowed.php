@@ -9,15 +9,13 @@
 
 namespace Dash\Router\Http\MatchResult;
 
-use Dash\Router\MatchResult\MatchResultInterface;
+use Dash\Router\MatchResult\AbstractFailedMatch;
 
 /**
  * HTTP specific match result if a scheme is not allowed by a route.
  */
-class DisallowedScheme implements MatchResultInterface
+class SchemeNotAllowed extends AbstractFailedMatch
 {
-    const TYPE = 'disallowed-scheme';
-
     /**
      * @var string
      */
@@ -37,10 +35,5 @@ class DisallowedScheme implements MatchResultInterface
     public function getAllowedUri()
     {
         return $this->allowedUri;
-    }
-
-    public function getType()
-    {
-        return self::TYPE;
     }
 }

@@ -76,7 +76,7 @@ class Router implements RouterInterface
     public function match(RequestInterface $request)
     {
         if (!$request instanceof HttpRequest) {
-            return new UnsupportedRequest();
+            return new UnsupportedRequest('Zend\Http\Request');
         }
 
         if ($this->baseUri === null) {

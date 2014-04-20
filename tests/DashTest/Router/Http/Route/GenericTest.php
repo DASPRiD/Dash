@@ -131,7 +131,7 @@ class GenericTest extends TestCase
         $this->route->setSecure(true);
 
         $result = $this->route->match($this->request, 0);
-        $this->assertInstanceOf('Dash\Router\Http\MatchResult\DisallowedScheme', $result);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SchemeNotAllowed', $result);
         $this->assertEquals('https://example.com/foo/bar', $result->getAllowedUri());
     }
 
@@ -141,7 +141,7 @@ class GenericTest extends TestCase
         $this->route->setMethods('post');
 
         $result = $this->route->match($this->request, 4);
-        $this->assertInstanceOf('Dash\Router\Http\MatchResult\DisallowedMethod', $result);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\MethodNotAllowed', $result);
         $this->assertEquals(['POST'], $result->getAllowedMethods());
     }
 

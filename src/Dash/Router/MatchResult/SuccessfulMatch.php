@@ -14,8 +14,6 @@ namespace Dash\Router\MatchResult;
  */
 class SuccessfulMatch implements MatchResultInterface
 {
-    const TYPE = 'successful-match';
-
     /**
      * @var array
      */
@@ -68,8 +66,8 @@ class SuccessfulMatch implements MatchResultInterface
         return $this->params;
     }
 
-    public function getType()
+    public function isSuccess()
     {
-        return self::TYPE;
+        return true;
     }
 }

@@ -12,12 +12,26 @@ namespace Dash\Router\MatchResult;
 /**
  * Match result returned when a router does not support the given request type.
  */
-class UnsupportedRequest implements MatchResultInterface
+class UnsupportedRequest extends AbstractFailedMatch
 {
-    const TYPE = 'unsupported-request';
+    /**
+     * @var string
+     */
+    protected $supportedRequestClassName;
 
-    public function getType()
+    /**
+     * @param string $supportedRequestClassName
+     */
+    public function __construct($supportedRequestClassName)
     {
-        return self::TYPE;
+        $this->supportedRequestClassName = $supportedRequestClassName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSupportedRequestClassName()
+    {
+        return $this->supportedRequestClassName;
     }
 }

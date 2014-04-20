@@ -9,15 +9,13 @@
 
 namespace Dash\Router\Http\MatchResult;
 
-use Dash\Router\MatchResult\MatchResultInterface;
+use Dash\Router\MatchResult\AbstractFailedMatch;
 
 /**
  * HTTP specific match result if a method is not allowed by a route.
  */
-class DisallowedMethod implements MatchResultInterface
+class MethodNotAllowed extends AbstractFailedMatch
 {
-    const TYPE = 'disallowed-method';
-
     /**
      * @var array
      */
@@ -47,10 +45,5 @@ class DisallowedMethod implements MatchResultInterface
     public function merge(self $disallowedMethod)
     {
         $this->allowedMethods += $disallowedMethod->getAllowedMethods();
-    }
-
-    public function getType()
-    {
-        return self::TYPE;
     }
 }

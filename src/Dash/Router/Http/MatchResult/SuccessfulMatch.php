@@ -17,8 +17,6 @@ use Dash\Router\MatchResult\SuccessfulMatch as BaseSuccessfulMatch;
  */
 class SuccessfulMatch extends BaseSuccessfulMatch
 {
-    const TYPE = 'successful-match';
-
     /**
      * @var null|string
      */

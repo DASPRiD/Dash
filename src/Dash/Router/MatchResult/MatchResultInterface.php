@@ -15,9 +15,9 @@ namespace Dash\Router\MatchResult;
 interface MatchResultInterface
 {
     /**
-     * Returns the result type.
+     * Returns whether the match result is a success.
      *
-     * @return string
+     * @return bool
      */
-    public function getType();
+    public function isSuccess();
 }

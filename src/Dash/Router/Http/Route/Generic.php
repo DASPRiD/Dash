@@ -10,8 +10,8 @@
 namespace Dash\Router\Http\Route;
 
 use Dash\Router\Exception;
-use Dash\Router\Http\MatchResult\DisallowedMethod;
-use Dash\Router\Http\MatchResult\DisallowedScheme;
+use Dash\Router\Http\MatchResult\MethodNotAllowed;
+use Dash\Router\Http\MatchResult\SchemeNotAllowed;
 use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Parser\ParserInterface;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
@@ -148,7 +148,7 @@ class Generic implements RouteInterface
         if ($this->secure && $uri->getScheme() !== 'https') {
             $allowedUri = clone $uri;
             $allowedUri->setScheme('https');
-            return new DisallowedScheme($allowedUri->toString());
+            return new SchemeNotAllowed($allowedUri->toString());
         }
 
         // Then match hostname, if parser is set.
@@ -188,7 +188,7 @@ class Generic implements RouteInterface
                 return $match;
             }
 
-            return new DisallowedMethod(array_keys($this->methods));
+            return new MethodNotAllowed(array_keys($this->methods));
         }
 
         // The path was not completely matched yet, so we check the children.
@@ -204,13 +204,13 @@ class Generic implements RouteInterface
             if (null !== ($childMatch = $childRoute->match($request, $pathOffset))) {
                 if ($childMatch instanceof SuccessfulMatch) {
                     $childMatch->prependRouteName($childName);
-                } elseif ($childMatch instanceof DisallowedMethod) {
+                } elseif ($childMatch instanceof MethodNotAllowed) {
                     if ($disallowedMethodResult === null) {
                         $disallowedMethodResult = $childMatch;
                     } else {
                         $disallowedMethodResult->merge($childMatch);
                     }
-                } elseif ($childMatch instanceof DisallowedScheme) {
+                } elseif ($childMatch instanceof SchemeNotAllowed) {
                     $disallowedSchemeResult = $childMatch;
                 }
                 break;
