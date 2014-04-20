@@ -17,7 +17,7 @@ use Dash\Router\MatchResult\AbstractFailedMatch;
 class MethodNotAllowed extends AbstractFailedMatch
 {
     /**
-     * @var array
+     * @var string[]
      */
     protected $allowedMethods;
 
@@ -30,7 +30,7 @@ class MethodNotAllowed extends AbstractFailedMatch
     }
 
     /**
-     * @return array
+     * @return string[]
      */
     public function getAllowedMethods()
     {

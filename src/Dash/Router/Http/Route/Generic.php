@@ -71,13 +71,13 @@ class Generic implements RouteInterface
         $this->methods = [];
 
         if (is_string($methods)) {
-            if ($methods === '') {
+            if ('' === $methods) {
                 $methods = [];
-            } elseif ($methods === '*') {
+            } elseif ('*' === $methods) {
                 $this->methods = $methods;
                 return;
             } else {
-                $methods = (array) $methods;
+                $methods = [$methods];
             }
         } elseif (!is_array($methods)) {
             throw new Exception\InvalidArgumentException('$methods must either be a string or an array');
@@ -196,33 +196,41 @@ class Generic implements RouteInterface
             return null;
         }
 
-        $disallowedMethodResult = null;
-        $disallowedSchemeResult = null;
+        $methodNotAllowedResult = null;
+        $schemeNotAllowedResult = null;
         $childMatch             = null;
 
         foreach ($this->children as $childName => $childRoute) {
             if (null !== ($childMatch = $childRoute->match($request, $pathOffset))) {
                 if ($childMatch instanceof SuccessfulMatch) {
                     $childMatch->prependRouteName($childName);
-                } elseif ($childMatch instanceof MethodNotAllowed) {
-                    if ($disallowedMethodResult === null) {
-                        $disallowedMethodResult = $childMatch;
-                    } else {
-                        $disallowedMethodResult->merge($childMatch);
-                    }
-                } elseif ($childMatch instanceof SchemeNotAllowed) {
-                    $disallowedSchemeResult = $childMatch;
+                    break;
                 }
+
+                if ($childMatch instanceof MethodNotAllowed) {
+                    if ($methodNotAllowedResult === null) {
+                        $methodNotAllowedResult = $childMatch;
+                    } else {
+                        $methodNotAllowedResult->merge($childMatch);
+                    }
+                    break;
+                }
+
+                if ($childMatch instanceof SchemeNotAllowed) {
+                    $schemeNotAllowedResult = $childMatch;
+                    break;
+                }
+
                 break;
             }
         }
 
-        if ($disallowedSchemeResult !== null) {
-            return $disallowedSchemeResult;
+        if ($schemeNotAllowedResult) {
+            return $schemeNotAllowedResult;
         }
 
-        if ($disallowedMethodResult !== null) {
-            return $disallowedMethodResult;
+        if ($methodNotAllowedResult) {
+            return $methodNotAllowedResult;
         }
 
         if ($childMatch === null) {
