@@ -59,7 +59,7 @@ class RouterTest extends TestCase
         $this->assertEquals('http://example.com/foo', $router->getBaseUri()->toString());
     }
 
-    public function testRouteMatchIsReturned()
+    public function testSuccessfulRouteMatchIsReturned()
     {
         $routeCollection    = new RouteCollection($this->getMock('Zend\ServiceManager\ServiceLocatorInterface'));
         $router             = new Router($routeCollection);
@@ -86,6 +86,26 @@ class RouterTest extends TestCase
         $routeMatch = $router->match($request);
         $this->assertSame($expectedRouteMatch, $routeMatch);
         $this->assertEquals('foo', $routeMatch->getRouteName());
+    }
+
+    public function testUnsuccessfulRouteMatchIsReturned()
+    {
+        $routeCollection    = new RouteCollection($this->getMock('Zend\ServiceManager\ServiceLocatorInterface'));
+        $router             = new Router($routeCollection);
+        $request            = $this->getHttpRequest();
+        $expectedRouteMatch = $this->getMock('Dash\Router\MatchResult\AbstractFailedMatch');
+
+        $route = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+        $route
+            ->expects($this->once())
+            ->method('match')
+            ->with($this->equalTo($request))
+            ->will($this->returnValue($expectedRouteMatch));
+
+        $routeCollection->insert('foo', $route);
+
+        $routeMatch = $router->match($request);
+        $this->assertSame($expectedRouteMatch, $routeMatch);
     }
 
     public function testExceptionOnUnexpectedSuccessfulMatchResult()
