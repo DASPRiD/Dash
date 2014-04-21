@@ -66,7 +66,7 @@ class RouterFactoryTest extends TestCase
 
         $match = $router->match($request);
 
-        $this->assertInstanceOf('Dash\Router\Http\RouteMatch', $match);
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals('user/edit', $match->getRouteName());
         $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
     }

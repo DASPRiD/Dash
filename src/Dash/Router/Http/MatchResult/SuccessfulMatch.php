@@ -7,35 +7,20 @@
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Router\Http;
+namespace Dash\Router\Http\MatchResult;
 
 use Dash\Router\Http\Parser\ParseResult;
-use Dash\Router\RouteMatchInterface;
+use Dash\Router\MatchResult\SuccessfulMatch as BaseSuccessfulMatch;
 
 /**
- * HTTP router specific route match.
+ * HTTP specific successful match result.
  */
-class RouteMatch implements RouteMatchInterface
+class SuccessfulMatch extends BaseSuccessfulMatch
 {
     /**
      * @var null|string
      */
     protected $routeName;
-
-    /**
-     * @var array
-     */
-    protected $params = [];
-
-    /**
-     * Creates a new route match, optionally initialized with parameters.
-     *
-     * @param array $params
-     */
-    public function __construct(array $params = [])
-    {
-        $this->params = $params;
-    }
 
     /**
      * @param string $routeName
@@ -70,32 +55,16 @@ class RouteMatch implements RouteMatchInterface
     }
 
     /**
-     * Merges another route match with this one.
+     * Merges another match with this one.
      *
-     * @param RouteMatch $routeMatch
+     * @param self $match
      */
-    public function merge(RouteMatch $routeMatch)
+    public function merge(self $match)
     {
-        $this->params = $routeMatch->getParams() + $this->params;
-        $this->prependRouteName($routeMatch->getRouteName());
-    }
+        $this->params = $match->getParams() + $this->params;
 
-    public function setParam($name, $value)
-    {
-        $this->params[$name] = $value;
-    }
-
-    public function getParam($name, $default = null)
-    {
-        if (isset($this->params[$name]) || array_key_exists($name, $this->params)) {
-            return $this->params[$name];
+        if ($match->getRouteName() !== null) {
+            $this->prependRouteName($match->getRouteName());
         }
-
-        return $default;
-    }
-
-    public function getParams()
-    {
-        return $this->params;
     }
 }
