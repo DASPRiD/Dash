@@ -71,9 +71,7 @@ class Generic implements RouteInterface
         $this->methods = [];
 
         if (is_string($methods)) {
-            if ('' === $methods) {
-                $methods = [];
-            } elseif ('*' === $methods) {
+            if ('' === $methods || '*' === $methods) {
                 $this->methods = $methods;
                 return;
             } else {
@@ -145,17 +143,17 @@ class Generic implements RouteInterface
         $uri = $request->getUri();
 
         // Verify scheme first, if set.
-        if ($this->secure && $uri->getScheme() !== 'https') {
+        if ($this->secure && 'https' !== $uri->getScheme()) {
             $allowedUri = clone $uri;
             $allowedUri->setScheme('https');
             return new SchemeNotAllowed($allowedUri->toString());
         }
 
         // Then match hostname, if parser is set.
-        if ($this->hostnameParser !== null) {
+        if (null !== $this->hostnameParser) {
             $hostnameResult = $this->hostnameParser->parse($uri->getHost(), 0);
 
-            if ($hostnameResult === null || strlen($uri->getHost()) !== $hostnameResult->getMatchLength()) {
+            if (null === $hostnameResult || strlen($uri->getHost()) !== $hostnameResult->getMatchLength()) {
                 return null;
             }
         }
@@ -163,7 +161,7 @@ class Generic implements RouteInterface
         // Next match the path.
         $completePathMatched = false;
 
-        if ($this->pathParser !== null) {
+        if (null !== $this->pathParser) {
             if (null === ($pathResult = $this->pathParser->parse($uri->getPath(), $pathOffset))) {
                 return null;
             }
@@ -184,7 +182,11 @@ class Generic implements RouteInterface
         }
 
         if ($completePathMatched) {
-            if ($this->methods === '*' || isset($this->methods[$request->getMethod()])) {
+            if ('' === $this->methods) {
+                return null;
+            }
+
+            if ('*' === $this->methods || isset($this->methods[$request->getMethod()])) {
                 return $match;
             }
 
@@ -192,7 +194,7 @@ class Generic implements RouteInterface
         }
 
         // The path was not completely matched yet, so we check the children.
-        if ($this->children === null) {
+        if (null === $this->children) {
             return null;
         }
 
@@ -201,44 +203,49 @@ class Generic implements RouteInterface
         $childMatch             = null;
 
         foreach ($this->children as $childName => $childRoute) {
-            if (null !== ($childMatch = $childRoute->match($request, $pathOffset))) {
-                if ($childMatch instanceof SuccessfulMatch) {
-                    $childMatch->prependRouteName($childName);
-                    break;
-                }
-
-                if ($childMatch instanceof MethodNotAllowed) {
-                    if ($methodNotAllowedResult === null) {
-                        $methodNotAllowedResult = $childMatch;
-                    } else {
-                        $methodNotAllowedResult->merge($childMatch);
-                    }
-                    break;
-                }
-
-                if ($childMatch instanceof SchemeNotAllowed) {
-                    $schemeNotAllowedResult = $childMatch;
-                    break;
-                }
-
-                break;
+            if (null === ($childMatch = $childRoute->match($request, $pathOffset))) {
+                continue;
             }
+
+            if ($childMatch->isSuccess()) {
+                if (!$childMatch instanceof SuccessfulMatch) {
+                    throw new Exception\UnexpectedValueException(sprintf(
+                        'Expected instance of Dash\Router\Http\MatchResult\SuccessfulMatch, received %s',
+                        is_object($childMatch) ? get_class($childMatch) : gettype($childMatch)
+                    ));
+                }
+
+                $childMatch->prependRouteName($childName);
+                $match->merge($childMatch);
+                return $match;
+            }
+
+            if ($childMatch instanceof MethodNotAllowed) {
+                if ($methodNotAllowedResult === null) {
+                    $methodNotAllowedResult = $childMatch;
+                } else {
+                    $methodNotAllowedResult->merge($childMatch);
+                }
+                continue;
+            }
+
+            if ($childMatch instanceof SchemeNotAllowed) {
+                $schemeNotAllowedResult = $schemeNotAllowedResult ?: $childMatch;
+                continue;
+            }
+
+            return $childMatch;
         }
 
-        if ($schemeNotAllowedResult) {
+        if (null !== $schemeNotAllowedResult) {
             return $schemeNotAllowedResult;
         }
 
-        if ($methodNotAllowedResult) {
+        if (null !== $methodNotAllowedResult) {
             return $methodNotAllowedResult;
         }
 
-        if ($childMatch === null) {
-            return null;
-        }
-
-        $match->merge($childMatch);
-        return $match;
+        return null;
     }
 
     /**

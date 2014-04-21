@@ -98,13 +98,19 @@ class Router implements RouterInterface
 
         /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
-            if (null !== ($matchResult = $route->match($request, $basePathLength))) {
-                if ($matchResult instanceof SuccessfulMatch) {
-                    $matchResult->prependRouteName($name);
-                }
-
-                return $matchResult;
+            if (null === ($matchResult = $route->match($request, $basePathLength)) || !$matchResult->isSuccess()) {
+                continue;
             }
+
+            if (!$matchResult instanceof SuccessfulMatch) {
+                throw new Exception\UnexpectedValueException(sprintf(
+                    'Expected instance of Dash\Router\Http\MatchResult\SuccessfulMatch, received %s',
+                    is_object($matchResult) ? get_class($matchResult) : gettype($matchResult)
+                ));
+            }
+
+            $matchResult->prependRouteName($name);
+            return $matchResult;
         }
 
         return new UnsuccessfulMatch();

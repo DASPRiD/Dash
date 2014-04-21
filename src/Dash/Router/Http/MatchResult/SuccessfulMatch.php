@@ -62,6 +62,9 @@ class SuccessfulMatch extends BaseSuccessfulMatch
     public function merge(self $match)
     {
         $this->params = $match->getParams() + $this->params;
-        $this->prependRouteName($match->getRouteName());
+
+        if ($match->getRouteName() !== null) {
+            $this->prependRouteName($match->getRouteName());
+        }
     }
 }

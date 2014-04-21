@@ -9,6 +9,7 @@
 
 namespace DashTest\Router\Http\Route;
 
+use Dash\Router\Http\MatchResult\MethodNotAllowed;
 use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Parser\ParseResult;
 use Dash\Router\Http\Route\Generic;
@@ -135,7 +136,16 @@ class GenericTest extends TestCase
         $this->assertEquals('https://example.com/foo/bar', $result->getAllowedUri());
     }
 
-    public function testNoMatchWithWrongMethod()
+    public function testNoMatchWithEmptyMethod()
+    {
+        $this->route->setPathParser($this->getSuccessfullPathParser());
+        $this->route->setMethods('');
+
+        $result = $this->route->match($this->request, 4);
+        $this->assertNull($result);
+    }
+
+    public function testMethodNotAllowedResultWithWrongMethod()
     {
         $this->route->setPathParser($this->getSuccessfullPathParser());
         $this->route->setMethods('post');
@@ -204,25 +214,82 @@ class GenericTest extends TestCase
 
     public function testIncompletePathMatchWithChildMatch()
     {
-        $routeCollection = $this->getRouteCollection();
-
-        $childMatch = new SuccessfulMatch(['baz' => 'bat']);
-
-        $childRoute = $this->getMock('Dash\Router\Http\Route\RouteInterface');
-        $childRoute
-            ->expects($this->once())
-            ->method('match')
-            ->with($this->equalTo($this->request), $this->equalTo(5))
-            ->will($this->returnValue($childMatch));
-
-        $routeCollection->insert('child', $childRoute);
-
-        $this->route->setChildren($routeCollection);
+        $this->assignChildren([new SuccessfulMatch(['baz' => 'bat'])]);
         $this->route->setPathParser($this->getIncompletePathParser());
         $match = $this->route->match($this->request, 4);
 
         $this->assertInstanceOf('Dash\Router\Http\MatchResult\SuccessfulMatch', $match);
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
+    }
+
+    public function testUnknownMatchResultTakesPrecedence()
+    {
+        $expectedMatchResult = $this->getMock('Dash\Router\MatchResult\MatchResultInterface');
+        $this->assignChildren([
+            'no-call',
+            $expectedMatchResult,
+            $this->getMock('Dash\Router\Http\MatchResult\MethodNotAllowed', [], [], '', false),
+            $this->getMock('Dash\Router\Http\MatchResult\SchemeNotAllowed', [], [], '', false),
+            null
+        ]);
+        $this->route->setPathParser($this->getIncompletePathParser());
+        $match = $this->route->match($this->request, 4);
+
+        $this->assertSame($expectedMatchResult, $match);
+    }
+
+    public function testFirstSchemeNotAllowedResultIsReturned()
+    {
+        $expectedMatchResult = $this->getMock('Dash\Router\Http\MatchResult\SchemeNotAllowed', [], [], '', false);
+        $this->assignChildren([
+            $this->getMock('Dash\Router\Http\MatchResult\SchemeNotAllowed', [], [], '', false),
+            $expectedMatchResult,
+        ]);
+        $this->route->setPathParser($this->getIncompletePathParser());
+        $match = $this->route->match($this->request, 4);
+
+        $this->assertSame($expectedMatchResult, $match);
+    }
+
+    public function testSchemeNotAllowedResultTakesPrecedence()
+    {
+        $expectedMatchResult = $this->getMock('Dash\Router\Http\MatchResult\SchemeNotAllowed', [], [], '', false);
+        $this->assignChildren([
+            $this->getMock('Dash\Router\Http\MatchResult\MethodNotAllowed', [], [], '', false),
+            $expectedMatchResult,
+        ]);
+        $this->route->setPathParser($this->getIncompletePathParser());
+        $match = $this->route->match($this->request, 4);
+
+        $this->assertSame($expectedMatchResult, $match);
+    }
+
+    public function testMethodNotAllowedResultsAreMerged()
+    {
+        $this->assignChildren([new MethodNotAllowed(['GET']), new MethodNotAllowed(['POST'])]);
+        $this->route->setPathParser($this->getIncompletePathParser());
+        $match = $this->route->match($this->request, 4);
+
+        $this->assertInstanceOf('Dash\Router\Http\MatchResult\MethodNotAllowed', $match);
+        $this->assertEquals(['POST', 'GET'], $match->getAllowedMethods());
+    }
+
+    public function testExceptionOnUnexpectedSuccessfulMatchResult()
+    {
+        $matchResult = $this->getMock('Dash\Router\MatchResult\MatchResultInterface');
+        $matchResult
+            ->expects($this->once())
+            ->method('isSuccess')
+            ->will($this->returnValue(true));
+
+        $this->assignChildren([$matchResult]);
+        $this->route->setPathParser($this->getIncompletePathParser());
+
+        $this->setExpectedException(
+            'Dash\Router\Exception\UnexpectedValueException',
+            'Expected instance of Dash\Router\Http\MatchResult\SuccessfulMatch, received'
+        );
+        $this->route->match($this->request, 4);
     }
 
     public function testAssembleSecureSchema()
@@ -367,5 +434,33 @@ class GenericTest extends TestCase
             ->will($this->returnValue(new ParseResult(['baz' => 'bat'], 11)));
 
         return $hostnameParser;
+    }
+
+    /**
+     * @param array $results
+     */
+    protected function assignChildren(array $results)
+    {
+        $routeCollection = $this->getRouteCollection();
+
+        foreach ($results as $index => $result) {
+            $childRoute = $this->getMock('Dash\Router\Http\Route\RouteInterface');
+
+            if ($result === 'no-call') {
+                $childRoute
+                    ->expects($this->never())
+                    ->method('match');
+            } else {
+                $childRoute
+                    ->expects($this->once())
+                    ->method('match')
+                    ->with($this->equalTo($this->request), $this->equalTo(5))
+                    ->will($this->returnValue($result));
+            }
+
+            $routeCollection->insert('child' . $index, $childRoute);
+        }
+
+        $this->route->setChildren($routeCollection);
     }
 }

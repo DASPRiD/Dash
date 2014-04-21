@@ -44,6 +44,6 @@ class MethodNotAllowed extends AbstractFailedMatch
      */
     public function merge(self $disallowedMethod)
     {
-        $this->allowedMethods += $disallowedMethod->getAllowedMethods();
+        $this->allowedMethods = array_unique(array_merge($this->allowedMethods, $disallowedMethod->getAllowedMethods()));
     }
 }
