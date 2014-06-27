@@ -15,6 +15,8 @@ use Dash\Router\Http\MatchResult\SchemeNotAllowed;
 use Dash\Router\Http\MatchResult\SuccessfulMatch;
 use Dash\Router\Http\Parser\ParserInterface;
 use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
+use Dash\Router\MatchResult\MatchResultInterface;
+use Dash\Router\Transformer\TransformerInterface;
 use Zend\Http\Request as HttpRequest;
 
 /**
@@ -62,6 +64,11 @@ class Generic implements RouteInterface
      * @var RouteCollectionInterface
      */
     protected $children;
+    
+    /**
+     * @var TransformerInterface[]
+     */
+    protected $transformers = [];
 
     /**
      * @param string|array $methods
@@ -138,6 +145,14 @@ class Generic implements RouteInterface
         $this->children = $children;
     }
 
+    /**
+     * @param TransformerInterface $transformer
+     */
+    public function addTransformer(TransformerInterface $transformer)
+    {
+        $this->transformers[] = $transformer;
+    }
+    
     public function match(HttpRequest $request, $pathOffset)
     {
         $uri = $request->getUri();
@@ -187,7 +202,7 @@ class Generic implements RouteInterface
             }
 
             if ('*' === $this->methods || isset($this->methods[$request->getMethod()])) {
-                return $match;
+                return $this->applyMatchTransforms($match);
             }
 
             return new MethodNotAllowed(array_keys($this->methods));
@@ -217,7 +232,7 @@ class Generic implements RouteInterface
 
                 $childMatch->prependRouteName($childName);
                 $match->merge($childMatch);
-                return $match;
+                return $this->applyMatchTransforms($match);
             }
 
             if ($childMatch instanceof MethodNotAllowed) {
@@ -253,6 +268,10 @@ class Generic implements RouteInterface
      */
     public function assemble(array $params, $childName = null)
     {
+        foreach ($this->transformers as $transformer) {
+            $params = $transformer->transformAssemble($params);
+        }
+        
         if ($childName !== null) {
             $nameParts  = explode('/', $childName, 2);
             $parentName = $nameParts[0];
@@ -280,5 +299,22 @@ class Generic implements RouteInterface
         }
 
         return $assemblyResult;
+    }
+    
+    /**
+     * @param  SuccessfulMatch $matchResult
+     * @return MatchResultInterface
+     */
+    protected function applyMatchTransforms(SuccessfulMatch $matchResult)
+    {
+        foreach ($this->transformers as $transformer) {
+            $matchResult = $transformer->transformMatch($matchResult);
+            
+            if (!$matchResult instanceof SuccessfulMatch) {
+                return $matchResult;
+            }
+        }
+        
+        return $matchResult;
     }
 }

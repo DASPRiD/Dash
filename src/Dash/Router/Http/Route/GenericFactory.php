@@ -80,6 +80,20 @@ class GenericFactory implements FactoryInterface, MutableCreationOptionsInterfac
 
         $route->setDefaults($defaults);
 
+        if (isset($options['transformers'])) {
+            $transformerManager = $routeManager->getServiceLocator()->get('Dash\Router\Transformer\TransformerManager');
+            
+            foreach ($options['transformers'] as $key => $value) {
+                if (is_array($value)) {
+                    $transformer = $transformerManager->get($key, $value);
+                } else {
+                    $transformer = $transformerManager->get($value);
+                }
+                
+                $route->addTransformer($transformer);
+            }
+        }
+        
         if (isset($options['children'])) {
             $routeList = new RouteCollection($routeManager);
 
