@@ -258,7 +258,6 @@ class Segment implements ParserInterface
                         $current['skip'] = false;
                     }
 
-                    // @todo Implement proper encoding strategy
                     $current['path'] .= $mergedParams[$part[static::NAME]];
                     break;
 
@@ -275,8 +274,8 @@ class Segment implements ParserInterface
                 case 'optional-end':
                     $parent = array_pop($stack);
 
-                    if ($current['is_optional'] && $current['skippable'] && $current['skip'] && $current['path'] !== '') {
-                        $parent['path'] = $current['path'];
+                    if (!($current['path'] !== '' && $current['is_optional'] && $current['skippable'] && $current['skip'])) {
+                        $parent['path'] .= $current['path'];
                         $parent['skip'] = false;
                     }
 

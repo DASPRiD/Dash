@@ -36,12 +36,6 @@ class SegmentTest extends TestCase
                 1,
                 ['foo' => 'bar'],
             ],
-            'offset-enables-partial-matching' => [
-                new Segment('/', '/:foo', []),
-                '/bar/baz',
-                0,
-                ['foo' => 'bar'],
-            ],
             'match-overrides-default' => [
                 new Segment('/', '/:foo', []),
                 '/bar',
@@ -96,7 +90,7 @@ class SegmentTest extends TestCase
                 0,
                 ['foo' => 'bar', 'bar' => 'baz']
             ],
-            'optional-group-is-discared-with-missing-parameter' => [
+            'optional-group-is-discarded-with-missing-parameter' => [
                 new Segment('/', '/:foo[/:bar/:baz]', []),
                 '/bar',
                 0,
@@ -172,40 +166,41 @@ class SegmentTest extends TestCase
 
     /**
      * @dataProvider parserProvider
-     * @param Segment $input
-     * @param string  $string
-     * @param int     $offset
-     * @param array   $params
+     * @param Segment     $parser
+     * @param string      $input
+     * @param int         $offset
+     * @param array       $params
+     * @param array|null  $defaults
      */
-    public function testParsing(Segment $route, $input, $offset = 0, array $params = null)
+    public function testParsing(Segment $parser, $input, $offset = 0, array $params = null)
     {
-        $result = $route->parse($input, $offset);
+        $result = $parser->parse($input, $offset);
 
         if ($params === null) {
             $this->assertNull($result);
         } else {
             $this->assertInstanceOf('Dash\Router\Http\Parser\ParseResult', $result);
-            $this->assertEquals($params, $result->getParams());
+            $this->assertSame($params, $result->getParams());
         }
     }
 
     /**
      * @dataProvider parserProvider
-     * @param Segment $route
-     * @param string  $input
-     * @param int     $offset
-     * @param array   $params
-     * @param array   $defaults
+     * @param Segment     $parser
+     * @param string      $input
+     * @param int         $offset
+     * @param array       $params
+     * @param array|null  $defaults
      */
-    public function testCompiling(Segment $route, $input, $offset = 0, array $params = null, array $defaults = [])
+    public function testCompiling(Segment $parser, $input, $offset = 0, array $params = null, array $defaults = [])
     {
         if ($params === null) {
             // Input which will not parse are not tested for compiling.
             return;
         }
 
-        $result = $route->compile($params, $defaults);
-        $this->assertEquals($offset, strpos($input, $result, $offset));
+        $result = $parser->compile($params, $defaults);
+        $this->assertSame(substr($input, $offset), $result);
     }
 
     /**
