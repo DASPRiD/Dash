@@ -10,13 +10,12 @@
         }
     ],
     "require": {
-        "zendframework/zend-http": "~2.2.5",
-        "zendframework/zend-stdlib": "~2.2.5",
-        "zendframework/zend-uri": "~2.2.5"
+        "zendframework/zend-stdlib": "~2.2.5"
     },
     "require-dev": {
         "phpunit/PHPUnit": "3.7.*",
         "satooshi/php-coveralls": ">=0.6.0",
+        "psr/http-message": "1.0.*@dev",
         "zendframework/zend-loader": "~2.2.5",
         "zendframework/zend-modulemanager": "~2.2.5",
         "zendframework/zend-servicemanager": "~2.2.5"

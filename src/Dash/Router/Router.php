@@ -3,22 +3,19 @@
  * Dash
  *
  * @link      http://github.com/DASPRiD/Dash For the canonical source repository
- * @copyright 2013 Ben Scholzen 'DASPRiD'
+ * @copyright 2013-2015 Ben Scholzen 'DASPRiD'
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Router\Http;
+namespace Dash\Router;
 
 use Dash\Router\Exception;
-use Dash\Router\Http\MatchResult\SuccessfulMatch;
-use Dash\Router\Http\Route\RouteInterface;
-use Dash\Router\Http\RouteCollection\RouteCollectionInterface;
+use Dash\Router\MatchResult\SuccessfulMatch;
 use Dash\Router\MatchResult\UnsuccessfulMatch;
-use Dash\Router\MatchResult\UnsupportedRequest;
+use Dash\Router\Route\RouteInterface;
+use Dash\Router\RouteCollection\RouteCollectionInterface;
 use Dash\Router\RouterInterface;
-use Zend\Http\Request as HttpRequest;
-use Zend\Stdlib\RequestInterface;
-use Zend\Uri\Http as HttpUri;
+use Psr\Http\Message\RequestInterface;
 
 class Router implements RouterInterface
 {
@@ -28,7 +25,7 @@ class Router implements RouterInterface
     protected $routeCollection;
 
     /**
-     * @var HttpUri
+     * @var null|array
      */
     protected $baseUri;
 
@@ -55,7 +52,7 @@ class Router implements RouterInterface
     /**
      * Gets the base URI.
      *
-     * @return HttpUri
+     * @return array
      */
     public function getBaseUri()
     {
@@ -65,36 +62,31 @@ class Router implements RouterInterface
     /**
      * Sets the base URI.
      *
-     * @param HttpUri $uri
+     * @param string $scheme
+     * @param string $host
+     * @param string $path
      */
-    public function setBaseUri(HttpUri $uri)
+    public function setBaseUri($scheme, $host, $path)
     {
-        $this->baseUri = $uri->normalize();
-        $this->baseUri->setPath(rtrim($this->baseUri->getPath(), '/'));
+        $this->baseUri = [
+            'scheme' => $scheme,
+            'host'   => $host,
+            'path'   => rtrim($path, '/'),
+        ];
     }
 
     public function match(RequestInterface $request)
     {
-        if (!$request instanceof HttpRequest) {
-            return new UnsupportedRequest('Zend\Http\Request');
-        }
-
         if ($this->baseUri === null) {
             $requestUri = $request->getUri();
-
-            $this->baseUri = new HttpUri();
-            $this->baseUri->setScheme($requestUri->getScheme());
-            $this->baseUri->setHost($requestUri->getHost());
-            $this->baseUri->setPort($requestUri->getPort());
-
-            if (method_exists($request, 'getBaseUrl')) {
-                $this->baseUri->setPath(rtrim($request->getBaseUrl(), '/'));
-            }
-
-            $this->baseUri->normalize();
+            $this->setBaseUri(
+                $requestUri->getScheme(),
+                $requestUri->getHost(),
+                method_exists($request, 'getBaseUrl') ? $request->getBaseUrl() : ''
+            );
         }
 
-        $basePathLength = $this->baseUri->getPath() === '/' ? 0 : strlen($this->baseUri->getPath());
+        $basePathLength = strlen($this->baseUri['path']);
 
         /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
@@ -105,7 +97,8 @@ class Router implements RouterInterface
             if ($matchResult->isSuccess()) {
                 if (!$matchResult instanceof SuccessfulMatch) {
                     throw new Exception\UnexpectedValueException(sprintf(
-                        'Expected instance of Dash\Router\Http\MatchResult\SuccessfulMatch, received %s',
+                        'Expected instance of %s, received %s',
+                        SuccessfulMatch::class,
                         is_object($matchResult) ? get_class($matchResult) : gettype($matchResult)
                     ));
                 }
@@ -124,6 +117,10 @@ class Router implements RouterInterface
      */
     public function assemble(array $params, array $options)
     {
+        if ($this->baseUri === null) {
+            throw new Exception\RuntimeException('Base URI has not been set');
+        }
+
         if (!isset($options['name'])) {
             throw new Exception\RuntimeException('No route name was supplied');
         }
@@ -133,7 +130,7 @@ class Router implements RouterInterface
         $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
         $assemblyResult = $this->routeCollection->get($parentName)->assemble($params, $childName);
-        $assemblyResult->path = $this->baseUri->getPath() . $assemblyResult->path;
+        $assemblyResult->path = $this->baseUri['path'] . $assemblyResult->path;
 
         if (isset($options['query'])) {
             $assemblyResult->query = $options['query'];
@@ -144,8 +141,8 @@ class Router implements RouterInterface
         }
 
         return $assemblyResult->generateUri(
-            $this->baseUri->getScheme(),
-            $this->baseUri->getHost(),
+            $this->baseUri['scheme'],
+            $this->baseUri['host'],
             (isset($options['force_canonical']) && $options['force_canonical'])
         );
     }

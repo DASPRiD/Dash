@@ -3,20 +3,21 @@
  * Dash
  *
  * @link      http://github.com/DASPRiD/Dash For the canonical source repository
- * @copyright 2013 Ben Scholzen 'DASPRiD'
+ * @copyright 2013-2015 Ben Scholzen 'DASPRiD'
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Router\Http\RouteCollection;
+namespace Dash\Router\RouteCollection;
 
 use Dash\Router\Exception;
-use Dash\Router\Http\Route\RouteInterface;
+use Dash\Router\Route\RouteInterface;
+use IteratorAggregate;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Generic route collection which uses a service locator to instantiate routes.
  */
-class RouteCollection implements RouteCollectionInterface
+class RouteCollection implements IteratorAggregate, RouteCollectionInterface
 {
     /**
      * @var ServiceLocatorInterface
@@ -39,7 +40,7 @@ class RouteCollection implements RouteCollectionInterface
     protected $sorted = false;
 
     /**
-     * @param ServiceLocatorInterface $routeBuilder
+     * @param ServiceLocatorInterface $routeManager
      */
     public function __construct(ServiceLocatorInterface $routeManager)
     {
@@ -101,35 +102,15 @@ class RouteCollection implements RouteCollectionInterface
         return $route;
     }
 
-    public function current()
-    {
-        $node = current($this->routes);
-        return ($node !== false ? $this->get(key($this->routes)) : false);
-    }
-
-    public function key()
-    {
-        return key($this->routes);
-    }
-
-    public function next()
-    {
-        $node = next($this->routes);
-        return ($node !== false ? $this->get(key($this->routes)) : false);
-    }
-
-    public function rewind()
+    public function getIterator()
     {
         if (!$this->sorted) {
             arsort($this->routes);
             $this->sorted = true;
         }
 
-        reset($this->routes);
-    }
-
-    public function valid()
-    {
-        return ($this->current() !== false);
+        foreach ($this->routes as $name => $route) {
+            yield $name => $route;
+        }
     }
 }

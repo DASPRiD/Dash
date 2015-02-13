@@ -2,11 +2,11 @@
 return [
     'service_manager' => [
         'invokables' => [
-            'Dash\Router\Http\Parser\ParserManager' => 'Dash\Router\Http\Parser\ParserManager',
-            'Dash\Router\Http\Route\RouteManager' => 'Dash\Router\Http\Route\RouteManager',
+            Dash\Router\Parser\ParserManager::class => Dash\Router\Parser\ParserManager::class,
+            Dash\Router\Route\RouteManager::class => Dash\Router\Route\RouteManager::class,
         ],
         'factories' => [
-            'Dash\Router\Http\Router' => 'Dash\Router\Http\RouterFactory',
+            Dash\Router\Router::class => Dash\Router\Http\RouterFactory::class,
         ],
     ],
 ];

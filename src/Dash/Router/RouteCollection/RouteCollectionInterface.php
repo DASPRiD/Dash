@@ -3,20 +3,20 @@
  * Dash
  *
  * @link      http://github.com/DASPRiD/Dash For the canonical source repository
- * @copyright 2013 Ben Scholzen 'DASPRiD'
+ * @copyright 2013-2015 Ben Scholzen 'DASPRiD'
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Router\Http\RouteCollection;
+namespace Dash\Router\RouteCollection;
 
 use Dash\Router\Exception;
-use Dash\Router\Http\Route\RouteInterface;
-use Iterator;
+use Dash\Router\Route\RouteInterface;
+use Traversable;
 
 /**
  * Interface every route collection must implement.
  */
-interface RouteCollectionInterface extends Iterator
+interface RouteCollectionInterface extends Traversable
 {
     /**
      * Inserts a new route into the list.
@@ -49,7 +49,7 @@ interface RouteCollectionInterface extends Iterator
      * Gets a specific route.
      *
      * @param  string $name
-     * @return null|RouteInterface
+     * @return RouteInterface
      * @throws Exception\OutOfBoundsException
      */
     public function get($name);

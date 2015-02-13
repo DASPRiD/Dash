@@ -3,13 +3,13 @@
  * Dash
  *
  * @link      http://github.com/DASPRiD/Dash For the canonical source repository
- * @copyright 2013 Ben Scholzen 'DASPRiD'
+ * @copyright 2013-2015 Ben Scholzen 'DASPRiD'
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Router\Http\Route;
+namespace Dash\Router\Route;
 
-use Dash\Router\Http\RouteCollection\RouteCollection;
+use Dash\Router\RouteCollection\RouteCollection;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\MutableCreationOptionsInterface;
@@ -38,7 +38,7 @@ class GenericFactory implements FactoryInterface, MutableCreationOptionsInterfac
         }
 
         $options       = $this->createOptions;
-        $parserManager = $routeManager->getServiceLocator()->get('Dash\Router\Http\Parser\ParserManager');
+        $parserManager = $routeManager->getServiceLocator()->get('Dash\Router\Parser\ParserManager');
 
         if (!isset($options['path']) && isset($options[0])) {
             $options['path'] = $options[0];

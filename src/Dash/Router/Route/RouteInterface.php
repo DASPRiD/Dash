@@ -3,14 +3,14 @@
  * Dash
  *
  * @link      http://github.com/DASPRiD/Dash For the canonical source repository
- * @copyright 2013 Ben Scholzen 'DASPRiD'
+ * @copyright 2013-2015 Ben Scholzen 'DASPRiD'
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Router\Http\Route;
+namespace Dash\Router\Route;
 
 use Dash\Router\MatchResult\MatchResultInterface;
-use Zend\Http\Request as HttpRequest;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * Interface every HTTP route must implement.
@@ -24,7 +24,7 @@ interface RouteInterface
      * @param  int         $pathOffset
      * @return null|MatchResultInterface
      */
-    public function match(HttpRequest $request, $pathOffset);
+    public function match(RequestInterface $request, $pathOffset);
 
     /**
      * Assembles a URL.
