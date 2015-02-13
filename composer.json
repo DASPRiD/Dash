@@ -10,6 +10,7 @@
         }
     ],
     "require": {
+        "php": ">=5.5.0",
         "zendframework/zend-stdlib": "~2.2.5"
     },
     "require-dev": {
