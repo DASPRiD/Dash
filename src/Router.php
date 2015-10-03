@@ -44,6 +44,10 @@ class Router implements RouterInterface
             'host'   => $baseUri->getHost(),
             'path'   => rtrim($baseUri->getPath(), '/'),
         ];
+
+        if ($this->baseUri['scheme'] === '' || $this->baseUri['host'] === '') {
+            throw new Exception\UnexpectedValueException('Base URI does not seem to be absolute');
+        }
     }
 
     /**

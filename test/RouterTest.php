@@ -19,7 +19,7 @@ use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollection;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\Router;
-use GuzzleHttp\Psr7\Request as Request2;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -229,7 +229,7 @@ class RouterTest extends TestCase
 
     protected function getHttpRequest()
     {
-        return new Request2('GET', 'http://example.com/foo/bar');
+        return new Request('GET', 'http://example.com/foo/bar');
     }
 
     protected function getAssemblyRouter(RouteInterface $route)
