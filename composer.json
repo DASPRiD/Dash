@@ -11,24 +11,28 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "zendframework/zend-stdlib": "~2.2.5"
+        "psr/http-message": "~1.0",
+        "zendframework/zend-stdlib": "~2.5"
     },
     "require-dev": {
-        "phpunit/PHPUnit": "3.7.*",
-        "satooshi/php-coveralls": ">=0.6.0",
-        "psr/http-message": "1.0.*@dev",
-        "zendframework/zend-loader": "~2.2.5",
-        "zendframework/zend-modulemanager": "~2.2.5",
-        "zendframework/zend-servicemanager": "~2.2.5"
+        "phpunit/PHPUnit": "~4.0|~5.0",
+        "zendframework/zend-modulemanager": "~2.5|~3.0",
+        "zendframework/zend-servicemanager": "dev-develop as 3.0.0",
+        "squizlabs/php_codesniffer": "~2.3",
+        "guzzlehttp/psr7": "~1.2"
     },
     "suggest": {
-        "zendframework/zend-loader": "Allows using the module without composer",
         "zendframework/zend-modulemanager": "Allows direct integration with Zend Framework applications",
         "zendframework/zend-servicemanager": "Allows use of the factories"
     },
     "autoload": {
-        "psr-0": {
+        "psr-4": {
             "Dash\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DashTest\\": "test/"
         }
     }
 }
