@@ -89,10 +89,6 @@ class Router implements RouterInterface
      */
     public function assemble(array $params, array $options)
     {
-        if ($this->baseUri === null) {
-            throw new Exception\RuntimeException('Base URI has not been set');
-        }
-
         if (!isset($options['name'])) {
             throw new Exception\RuntimeException('No route name was supplied');
         }
