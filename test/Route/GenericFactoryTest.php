@@ -37,8 +37,7 @@ class GenericFactoryTest extends TestCase
         $factory = new GenericFactory();
         $route = $factory($this->getServiceLocator(), '', [
             '/foo',
-            'action',
-            'controller',
+            ['action' => 'action', 'controller' => 'controller'],
             'get',
             'hostname' => 'example.com',
             'secure' => true,
@@ -54,8 +53,7 @@ class GenericFactoryTest extends TestCase
         $factory = new GenericFactory();
         $route = $factory($this->getServiceLocator(), '', [
             '/bar',
-            'action',
-            'controller',
+            ['action' => 'action', 'controller' => 'controller'],
             'get',
             'hostname' => 'example.com',
             'secure' => true,

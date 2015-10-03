@@ -42,7 +42,7 @@ class RouterFactory implements FactoryInterface
         } elseif ($container->has('Request') && method_exists($request = $container->getRequest(), 'getBasePath')) {
             $baseUri = (new Uri($request->getUriString()))->withPath($request->getBasePath());
         } else {
-            $baseUri = new Uri();
+            throw new Exception\RuntimeException('Could not determine a base URI');
         }
 
         return new Router($routeCollection, $baseUri);
