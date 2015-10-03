@@ -1,12 +1,10 @@
 <?php
 return [
     'service_manager' => [
-        'invokables' => [
-            'Dash\Router\Http\Parser\ParserManager' => 'Dash\Router\Http\Parser\ParserManager',
-            'Dash\Router\Http\Route\RouteManager' => 'Dash\Router\Http\Route\RouteManager',
-        ],
         'factories' => [
-            'Dash\Router\Http\Router' => 'Dash\Router\Http\RouterFactory',
+            Dash\Router::class => Dash\RouterFactory::class,
+            Dash\Parser\ParserManager::class => Dash\Parser\ParserManagerFactory::class,
+            Dash\Route\RouteManager::class => Dash\Route\RouteManagerFactory::class,
         ],
     ],
 ];
