@@ -26,10 +26,10 @@ class RouterFactoryTest extends TestCase
     protected $config = [
         'dash' => [
             'routes' => [
-                'user' => ['/user', 'index', 'Application\Controller\UserController', 'children' => [
-                    'create' => ['/create', 'create', 'Application\Controller\UserController', ['get', 'post']],
-                    'edit' => ['/edit/:id', 'edit', 'Application\Controller\UserController', ['get', 'post'], 'constraints' => ['id' => '\d+']],
-                    'delete' => ['/delete/:id', 'edit', 'Application\Controller\UserController', 'constraints' => ['id' => '\d+']],
+                'user' => ['/user', ['action' => 'index', 'controller' => 'UserController'], 'children' => [
+                    'create' => ['/create', ['action' => 'create'], ['get', 'post']],
+                    'edit' => ['/edit/:id', ['action' => 'edit'], ['get', 'post'], 'constraints' => ['id' => '\d+']],
+                    'delete' => ['/delete/:id', ['action' => 'delete'], 'constraints' => ['id' => '\d+']],
                 ]],
             ],
             'base_uri' => 'http://example.com/'
@@ -39,7 +39,7 @@ class RouterFactoryTest extends TestCase
     public function testFactorySucceedsWithoutConfig()
     {
         $factory = new RouterFactory();
-        $factory($this->getServiceLocator([]), '');
+        $factory($this->getServiceLocator(['dash' => ['base_uri' => 'http://example.com/']]), '');
     }
 
     public function testFactoryIntegration()
@@ -51,7 +51,7 @@ class RouterFactoryTest extends TestCase
 
         $this->assertInstanceOf(SuccessfulMatch::class, $match);
         $this->assertEquals('user/edit', $match->getRouteName());
-        $this->assertEquals(['controller' => 'Application\Controller\UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
+        $this->assertEquals(['controller' => 'UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
     }
 
     /**

@@ -32,7 +32,7 @@ class RouterTest extends TestCase
     public function testRetrieveRouteCollection()
     {
         $routeCollection = $this->getMock(RouteCollectionInterface::class);
-        $router          = new Router($routeCollection, new Uri());
+        $router          = new Router($routeCollection, new Uri('http://example.com/foo'));
 
         $this->assertSame($routeCollection, $router->getRouteCollection());
     }
@@ -40,7 +40,7 @@ class RouterTest extends TestCase
     public function testSuccessfulRouteMatchIsReturned()
     {
         $routeCollection    = new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-        $router             = new Router($routeCollection, new Uri());
+        $router             = new Router($routeCollection, new Uri('http://example.com/foo'));
         $request            = $this->getHttpRequest();
         $expectedRouteMatch = new SuccessfulMatch();
 
@@ -69,7 +69,7 @@ class RouterTest extends TestCase
     public function testUnsuccessfulRouteMatchIsReturned()
     {
         $routeCollection    = new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-        $router             = new Router($routeCollection, new Uri());
+        $router             = new Router($routeCollection, new Uri('http://example.com/foo'));
         $request            = $this->getHttpRequest();
         $expectedRouteMatch = $this->getMock(AbstractFailedMatch::class);
 
@@ -95,7 +95,7 @@ class RouterTest extends TestCase
             ->will($this->returnValue(true));
 
         $routeCollection    = new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-        $router             = new Router($routeCollection, new Uri());
+        $router             = new Router($routeCollection, new Uri('http://example.com/foo'));
         $request            = $this->getHttpRequest();
 
         $route = $this->getMock(RouteInterface::class);
@@ -117,7 +117,7 @@ class RouterTest extends TestCase
     public function testAssembleFailsWithoutRouteName()
     {
         $routeCollection = $this->getMock(RouteCollectionInterface::class);
-        $router          = new Router($routeCollection, new Uri());
+        $router          = new Router($routeCollection, new Uri('http://example.com/foo'));
 
         $this->setExpectedException(RuntimeException::class, 'No route name was supplied');
         $router->assemble([], []);

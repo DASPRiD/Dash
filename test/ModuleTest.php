@@ -35,7 +35,15 @@ class ModuleTest extends TestCase
     {
         $config = $this->module->getConfig();
         $serviceManager = new ServiceManager(
-            $config['service_manager'] + ['services' => ['config' => []]]
+            $config['service_manager'] + [
+                'services' => [
+                    'config' => [
+                        'dash' => [
+                            'base_uri' => 'http://example.com/'
+                        ],
+                    ],
+                ],
+            ]
         );
 
         $this->assertInstanceOf(

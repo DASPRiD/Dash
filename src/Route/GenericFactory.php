@@ -50,8 +50,8 @@ class GenericFactory implements FactoryInterface
             $route->setHostnameParser($parserManager->get('HostnameSegment', $options));
         }
 
-        if (!isset($options['methods']) && isset($options[3])) {
-            $options['methods'] = $options[3];
+        if (!isset($options['methods']) && isset($options[2])) {
+            $options['methods'] = $options[2];
         }
 
         if (isset($options['methods'])) {
@@ -62,14 +62,10 @@ class GenericFactory implements FactoryInterface
             $route->setSecure($options['secure']);
         }
 
-        $defaults = (isset($options['defaults']) ? $options['defaults'] : []);
+        $defaults = isset($options[1]) ? $options[1] : [];
 
-        if (!isset($options['controller']) && isset($options[2])) {
-            $defaults['controller'] = $options[2];
-        }
-
-        if (!isset($options['action']) && isset($options[1])) {
-            $defaults['action'] = $options[1];
+        if (isset($options['defaults'])) {
+            $defaults = array_replace($defaults, $options['defaults']);
         }
 
         $route->setDefaults($defaults);
