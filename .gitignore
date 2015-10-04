@@ -1,5 +1,7 @@
-composer.lock
 nbproject
-vendor
 .idea
+composer.lock
+vendor
 clover.xml
+coveralls-upload.json
+phpunit.xml
