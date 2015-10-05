@@ -9,6 +9,8 @@
 
 namespace Dash\MatchResult;
 
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * HTTP specific match result if a method is not allowed by a route.
  */
@@ -25,6 +27,13 @@ class MethodNotAllowed extends AbstractFailedMatch
     public function __construct(array $allowedMethods)
     {
         $this->allowedMethods = $allowedMethods;
+    }
+
+    public function modifyResponse(ResponseInterface $response)
+    {
+        return $response
+            ->withStatus(405)
+            ->withHeader('Allow', implode(', ', $this->allowedMethods));
     }
 
     /**

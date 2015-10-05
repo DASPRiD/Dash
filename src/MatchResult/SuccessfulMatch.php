@@ -10,6 +10,7 @@
 namespace Dash\MatchResult;
 
 use Dash\Parser\ParseResult;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Generic successful match result.
@@ -122,5 +123,10 @@ class SuccessfulMatch implements MatchResultInterface
     final public function isSuccess()
     {
         return true;
+    }
+
+    public function modifyResponse(ResponseInterface $response)
+    {
+        return $response;
     }
 }

@@ -9,6 +9,8 @@
 
 namespace Dash\MatchResult;
 
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * Interface describing match results returned by routers.
  */
@@ -20,4 +22,12 @@ interface MatchResultInterface
      * @return bool
      */
     public function isSuccess();
+
+    /**
+     * Modifies the response to properly indicate the kind of failure.
+     *
+     * @param  ResponseInterface $response
+     * @return ResponseInterface
+     */
+    public function modifyResponse(ResponseInterface $response);
 }

@@ -9,6 +9,7 @@
 
 namespace Dash\MatchResult;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -27,6 +28,13 @@ class SchemeNotAllowed extends AbstractFailedMatch
     public function __construct(UriInterface $allowedUri)
     {
         $this->allowedUri = $allowedUri;
+    }
+
+    public function modifyResponse(ResponseInterface $response)
+    {
+        return $response
+            ->withStatus(301)
+            ->withHeader('Location', (string) $this->allowedUri);
     }
 
     /**

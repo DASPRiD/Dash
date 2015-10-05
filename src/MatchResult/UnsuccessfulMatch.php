@@ -9,9 +9,15 @@
 
 namespace Dash\MatchResult;
 
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * Unspecific match result when the router could not match the request.
  */
 class UnsuccessfulMatch extends AbstractFailedMatch
 {
+    public function modifyResponse(ResponseInterface $response)
+    {
+        return $response->withStatus(404);
+    }
 }

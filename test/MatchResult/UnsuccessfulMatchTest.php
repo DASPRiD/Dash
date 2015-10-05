@@ -10,6 +10,7 @@
 namespace DashTest\MatchResult;
 
 use Dash\MatchResult\UnsuccessfulMatch;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -20,5 +21,11 @@ class UnsuccessfulMatchTest extends TestCase
     public function testIsSuccess()
     {
         $this->assertFalse((new UnsuccessfulMatch())->isSuccess());
+    }
+
+    public function testModifyResponse()
+    {
+        $result = new UnsuccessfulMatch();
+        $this->assertSame(404, $result->modifyResponse(new Response())->getStatusCode());
     }
 }

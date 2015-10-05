@@ -10,6 +10,7 @@
 namespace DashTest\MatchResult;
 
 use Dash\MatchResult\MethodNotAllowed;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -32,5 +33,13 @@ class MethodNotAllowedTest extends TestCase
         $result = new MethodNotAllowed(['GET', 'PUT']);
         $result->merge(new MethodNotAllowed(['POST', 'GET']));
         $this->assertEquals(['GET', 'PUT', 'POST'], $result->getAllowedMethods());
+    }
+
+    public function testModifyResponse()
+    {
+        $result   = new MethodNotAllowed(['GET', 'PUT']);
+        $response = $result->modifyResponse(new Response());
+        $this->assertSame(405, $response->getStatusCode());
+        $this->assertSame('GET, PUT', $response->getHeaderLine('Allow'));
     }
 }

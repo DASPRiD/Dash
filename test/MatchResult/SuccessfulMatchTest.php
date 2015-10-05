@@ -11,6 +11,7 @@ namespace DashTest\MatchResult;
 
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Parser\ParseResult;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -73,5 +74,12 @@ class SuccessfulMatchTest extends TestCase
         $otherMatch->prependRouteName('bar');
         $result->merge($otherMatch);
         $this->assertEquals('bar/foo', $result->getRouteName());
+    }
+
+    public function testModifyResponse()
+    {
+        $result   = new SuccessfulMatch();
+        $response = new Response();
+        $this->assertEquals(clone $response, $result->modifyResponse($response));
     }
 }

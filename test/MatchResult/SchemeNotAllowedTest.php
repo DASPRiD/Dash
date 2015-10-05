@@ -10,6 +10,7 @@
 namespace DashTest\MatchResult;
 
 use Dash\MatchResult\SchemeNotAllowed;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use PHPUnit_Framework_TestCase as TestCase;
 
@@ -27,5 +28,13 @@ class SchemeNotAllowedTest extends TestCase
     {
         $uri = new Uri('https://example.com');
         $this->assertSame($uri, (new SchemeNotAllowed($uri))->getAllowedUri());
+    }
+
+    public function testModifyResponse()
+    {
+        $result   = new SchemeNotAllowed(new Uri('https://example.com'));
+        $response = $result->modifyResponse(new Response());
+        $this->assertSame(301, $response->getStatusCode());
+        $this->assertSame('https://example.com', $response->getHeaderLine('Location'));
     }
 }
