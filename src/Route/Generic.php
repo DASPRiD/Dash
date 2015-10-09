@@ -37,11 +37,16 @@ class Generic implements RouteInterface
     protected $methods = '*';
 
     /**
-     * Whether to force the route to be HTTPS.
+     * Whether to force the route to be HTTPS or HTTP.
      *
-     * @var bool
+     * @var bool|null
      */
-    protected $secure = false;
+    protected $secure;
+
+    /**
+     * @var int|null
+     */
+    protected $port;
 
     /**
      * @var null|ParserInterface
@@ -99,11 +104,19 @@ class Generic implements RouteInterface
     }
 
     /**
-     * @param bool $secure
+     * @param bool|null $secure
      */
     public function setSecure($secure)
     {
-        $this->secure = (bool) $secure;
+        $this->secure = $secure === null ? null : (bool) $secure;
+    }
+
+    /**
+     * @param int|null $port
+     */
+    public function setPort($port)
+    {
+        $this->port = $port === null ? null : (int) $port;
     }
 
     /**
@@ -143,8 +156,10 @@ class Generic implements RouteInterface
         $uri = $request->getUri();
 
         // Verify scheme first, if set.
-        if ($this->secure && 'https' !== $uri->getScheme()) {
+        if (true === $this->secure && 'https' !== $uri->getScheme()) {
             return new SchemeNotAllowed($uri->withScheme('https'));
+        } elseif (false === $this->secure && 'http' !== $uri->getScheme()) {
+            return new SchemeNotAllowed($uri->withScheme('http'));
         }
 
         // Then match hostname, if parser is set.
@@ -156,17 +171,25 @@ class Generic implements RouteInterface
             }
         }
 
-        // Next match the path.
-        $completePathMatched = false;
+        // Then match port, if set
+        if (null !== $this->port) {
+            $port = $uri->getPort() ?: ('http' === $uri->getScheme() ? 80 : 443);
 
+            if ($port !== $this->port) {
+                return null;
+            }
+        }
+
+        // Next match the path.
         if (null !== $this->pathParser) {
             if (null === ($pathResult = $this->pathParser->parse($uri->getPath(), $pathOffset))) {
                 return null;
             }
 
             $pathOffset += $pathResult->getMatchLength();
-            $completePathMatched = ($pathOffset === strlen($uri->getPath()));
         }
+
+        $completePathMatched = ($pathOffset === strlen($uri->getPath()));
 
         // Looks good so far, let's create a match.
         $match = new SuccessfulMatch($this->defaults);
@@ -266,8 +289,12 @@ class Generic implements RouteInterface
             $assemblyResult = new AssemblyResult();
         }
 
-        if ($this->secure) {
-            $assemblyResult->scheme = 'https';
+        if (null !== $this->secure) {
+            $assemblyResult->scheme = $this->secure ? 'https' : 'http';
+        }
+
+        if (null !== $this->port) {
+            $assemblyResult->port = $this->port;
         }
 
         if ($this->hostnameParser !== null) {

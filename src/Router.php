@@ -42,11 +42,16 @@ class Router implements RouterInterface
         $this->baseUri = [
             'scheme' => $baseUri->getScheme(),
             'host'   => $baseUri->getHost(),
+            'port'   => $baseUri->getPort(),
             'path'   => rtrim($baseUri->getPath(), '/'),
         ];
 
-        if ($this->baseUri['scheme'] === '' || $this->baseUri['host'] === '') {
+        if ('' === $this->baseUri['scheme'] || '' === $this->baseUri['host']) {
             throw new Exception\UnexpectedValueException('Base URI does not seem to be absolute');
+        }
+
+        if (null === $this->baseUri['port']) {
+            $this->baseUri['port'] = ('http' === $this->baseUri['scheme'] ? 80 : 443);
         }
     }
 
@@ -115,6 +120,7 @@ class Router implements RouterInterface
         return $assemblyResult->generateUri(
             $this->baseUri['scheme'],
             $this->baseUri['host'],
+            $this->baseUri['port'],
             (isset($options['force_canonical']) && $options['force_canonical'])
         );
     }
