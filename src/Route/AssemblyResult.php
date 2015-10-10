@@ -55,6 +55,11 @@ class AssemblyResult
     public $host;
 
     /**
+     * @var null|int
+     */
+    public $port;
+
+    /**
      * @var null|string
      */
     public $path;
@@ -79,19 +84,35 @@ class AssemblyResult
      *
      * @param  string $referenceScheme
      * @param  string $referenceHost
+     * @param  int    $referencePort
      * @param  bool   $forceCanonical
      * @return string
      */
-    public function generateUri($referenceScheme, $referenceHost, $forceCanonical)
+    public function generateUri($referenceScheme, $referenceHost, $referencePort, $forceCanonical)
     {
-        $url = '';
+        $url    = '';
+        $scheme = $referenceScheme;
+        $port   = $this->port;
 
         if ($forceCanonical || $this->scheme !== null && $referenceScheme !== $this->scheme) {
-            $url .= ($this->scheme ?: $referenceScheme) . ':';
+            $url .= ($scheme = $this->scheme ?: $referenceScheme) . ':';
+            $forceCanonical = true;
         }
 
-        if ($forceCanonical || $this->host !== null && $referenceHost !== $this->host) {
+        if (null === $this->port) {
+            if ($scheme === $referenceScheme && (null === $this->host || $this->host === $referenceHost)) {
+                $port = $referencePort;
+            } else {
+                $port = 'http' === $scheme ? 80 : 443;
+            }
+        }
+
+        if ($forceCanonical || $this->host !== null && $referenceHost !== $this->host || $port !== $referencePort) {
             $url .= '//' . ($this->host ?: $referenceHost);
+
+            if ('http' === $scheme && 80 !== $port || 'https' === $scheme && 443 !== $port) {
+                $url .= ':' . $port;
+            }
         }
 
         $url .= strtr(rawurlencode($this->path), static::$allowedPathChars);

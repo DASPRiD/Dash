@@ -50,11 +50,31 @@ class AssemblyResultTest extends TestCase
             ],
             'different-scheme' => [
                 ['scheme' => 'https'],
-                'https:',
+                'https://example.com',
+            ],
+            'different-port' => [
+                ['port' => 500],
+                '//example.com:500',
+            ],
+            'standard-port' => [
+                ['port' => 80],
+                '',
+            ],
+            'identical-scheme' => [
+                ['scheme' => 'http'],
+                '',
+            ],
+            'standard-port-with-different-host' => [
+                ['port' => 80, 'host' => 'example.org'],
+                '//example.org',
+            ],
+            'different-standard-port' => [
+                ['scheme' => 'https', 'port' => 443],
+                'https://example.com',
             ],
             'different-scheme-with-path' => [
                 ['scheme' => 'https', 'path' => '/foo'],
-                'https:/foo',
+                'https://example.com/foo',
             ],
             'force-canonical' => [
                 [],
@@ -80,7 +100,7 @@ class AssemblyResultTest extends TestCase
 
         $this->assertEquals(
             $expectedUri,
-            $assemblyResult->generateUri('http', 'example.com', $forceCanonical)
+            $assemblyResult->generateUri('http', 'example.com', 80, $forceCanonical)
         );
     }
 }

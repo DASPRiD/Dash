@@ -21,7 +21,7 @@ use Dash\Parser\ParserInterface;
 use Dash\Route\Generic;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollection;
-use PHPUnit_Framework_MockObject_MockObject;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit_Framework_TestCase as TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -167,6 +167,25 @@ class GenericTest extends TestCase
         $this->route->setPathParser($pathParser);
         $this->route->setHostnameParser($hostnameParser);
         $this->assertNull($this->route->match($this->request, 4));
+    }
+
+    public function testFailedPortMatch()
+    {
+        $pathParser = $this->getMock(ParserInterface::class);
+        $pathParser
+            ->expects($this->never())
+            ->method('parse');
+
+        $this->route->setPathParser($pathParser);
+        $this->route->setPort(500);
+        $this->assertNull($this->route->match($this->request, 4));
+    }
+
+    public function testSuccessfulPortMatch()
+    {
+        $this->route->setPathParser($this->getSuccessfullPathParser());
+        $this->route->setPort(80);
+        $this->assertNotNull($this->route->match($this->request, 4));
     }
 
     public function testEarlyReturnOnNonSecureScheme()
@@ -348,7 +367,7 @@ class GenericTest extends TestCase
         $this->route->setSecure(true);
         $assemblyResult = $this->route->assemble([]);
 
-        $this->assertEquals('https:', $assemblyResult->generateUri('http', 'example.com', false));
+        $this->assertEquals('https://example.com', $assemblyResult->generateUri('http', 'example.com', 80, false));
     }
 
     public function testAssembleHostname()
@@ -364,7 +383,7 @@ class GenericTest extends TestCase
         $this->route->setDefaults(['baz' => 'bat']);
         $assemblyResult = $this->route->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('//example.org', $assemblyResult->generateUri('http', 'example.com', false));
+        $this->assertEquals('//example.org', $assemblyResult->generateUri('http', 'example.com', 80, false));
     }
 
     public function testAssemblePath()
@@ -380,7 +399,15 @@ class GenericTest extends TestCase
         $this->route->setDefaults(['baz' => 'bat']);
         $assemblyResult = $this->route->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('/bar', $assemblyResult->generateUri('http', 'example.com', false));
+        $this->assertEquals('/bar', $assemblyResult->generateUri('http', 'example.com', 80, false));
+    }
+
+    public function testAssemblePort()
+    {
+        $this->route->setPort(400);
+        $assemblyResult = $this->route->assemble([]);
+
+        $this->assertEquals('//example.com:400', $assemblyResult->generateUri('http', 'example.com', 80, false));
     }
 
     public function testAssembleFailsWithoutChildren()
@@ -443,7 +470,7 @@ class GenericTest extends TestCase
     }
 
     /**
-     * @return ParserInterface|PHPUnit_Framework_MockObject_MockObject
+     * @return ParserInterface|MockObject
      */
     protected function getIncompletePathParser()
     {
@@ -458,7 +485,7 @@ class GenericTest extends TestCase
     }
 
     /**
-     * @return ParserInterface||PHPUnit_Framework_MockObject_MockObject
+     * @return ParserInterface|MockObject
      */
     protected function getSuccessfullPathParser()
     {
@@ -473,7 +500,7 @@ class GenericTest extends TestCase
     }
 
     /**
-     * @return ParserInterface||PHPUnit_Framework_MockObject_MockObject
+     * @return ParserInterface|MockObject
      */
     protected function getSuccessfullHostnameParser()
     {
