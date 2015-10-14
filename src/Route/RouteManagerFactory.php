@@ -18,9 +18,8 @@ use Zend\ServiceManager\Factory\FactoryInterface;
 class RouteManagerFactory implements FactoryInterface
 {
     /**
-     * @param  ContainerInterface $container
-     * @param  string             $requestedName
-     * @param  array              $options
+     * {@inheritdoc}
+     *
      * @return RouteManager
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)

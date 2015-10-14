@@ -27,9 +27,8 @@ class PathSegmentFactory implements FactoryInterface
     protected $cache = [];
 
     /**
-     * @param  ContainerInterface $container
-     * @param  string             $requestedName
-     * @param  array              $options
+     * {@inheritdoc}
+     *
      * @return Segment
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)

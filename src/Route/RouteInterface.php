@@ -22,7 +22,7 @@ interface RouteInterface
      *
      * @param  HttpRequest $request
      * @param  int         $pathOffset
-     * @return null|MatchResultInterface
+     * @return MatchResultInterface|null
      */
     public function match(RequestInterface $request, $pathOffset);
 
@@ -30,7 +30,7 @@ interface RouteInterface
      * Assembles a URL.
      *
      * @param  array       $params
-     * @param  null|string $childName
+     * @param  string|null $childName
      * @return AssemblyResult
      */
     public function assemble(array $params, $childName = null);

@@ -10,6 +10,7 @@
 namespace DashTest\Parser;
 
 use Dash\Parser\PathSegmentFactory;
+use Dash\Parser\Segment;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
@@ -23,9 +24,10 @@ class PathSegmentFactoryTest extends TestCase
         $factory = new PathSegmentFactory();
         $parser  = $factory($this->getMock(ContainerInterface::class), '');
 
-        $parseResult = $parser->parse('', 0);
-        $this->assertEquals([], $parseResult->getParams());
-        $this->assertEquals(0, $parseResult->getMatchLength());
+        $this->assertInstanceOf(Segment::class, $parser);
+        $this->assertAttributeSame('/', 'delimiter', $parser);
+        $this->assertAttributeSame('', 'pattern', $parser);
+        $this->assertAttributeSame([], 'constraints', $parser);
     }
 
     public function testFactoryWithConfiguration()
@@ -35,15 +37,15 @@ class PathSegmentFactoryTest extends TestCase
             $this->getMock(ContainerInterface::class),
             '',
             [
-            'path'        => '/:foo/bar',
-            'constraints' => ['foo' => '1'],
+                'path'        => '/:foo/bar',
+                'constraints' => ['foo' => '1'],
             ]
         );
 
-        $this->assertNull($parser->parse('/0/bar', 0));
-        $parseResult = $parser->parse('/1/bar', 0);
-        $this->assertEquals(['foo' => '1'], $parseResult->getParams());
-        $this->assertEquals(6, $parseResult->getMatchLength());
+        $this->assertInstanceOf(Segment::class, $parser);
+        $this->assertAttributeSame('/', 'delimiter', $parser);
+        $this->assertAttributeSame('/:foo/bar', 'pattern', $parser);
+        $this->assertAttributeSame(['foo' => '1'], 'constraints', $parser);
     }
 
     public function testFactoryReusesInstancesWithSameConfiguration()

@@ -10,22 +10,22 @@
 namespace DashTest\MatchResult;
 
 use Dash\MatchResult\SchemeNotAllowed;
-use GuzzleHttp\Psr7\Uri;
 use PHPUnit_Framework_TestCase as TestCase;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @covers Dash\MatchResult\SchemeNotAllowed
  */
 class SchemeNotAllowedTest extends TestCase
 {
-    public function testIsSuccess()
+    public function testIsFailure()
     {
-        $this->assertFalse((new SchemeNotAllowed(new Uri()))->isSuccess());
+        $this->assertFalse((new SchemeNotAllowed($this->getMock(UriInterface::class)))->isSuccess());
     }
 
     public function testGetAllowedUri()
     {
-        $uri = new Uri('https://example.com');
+        $uri = $this->getMock(UriInterface::class);
         $this->assertSame($uri, (new SchemeNotAllowed($uri))->getAllowedUri());
     }
 }

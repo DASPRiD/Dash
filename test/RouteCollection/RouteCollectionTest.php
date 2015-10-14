@@ -9,13 +9,15 @@
 
 namespace DashTest\RouteCollection;
 
-use Dash\Exception\InvalidArgumentException;
 use Dash\Exception\OutOfBoundsException;
+use Dash\Exception\UnexpectedValueException;
 use Dash\Route\RouteInterface;
+use Dash\Route\RouteManager;
 use Dash\RouteCollection\RouteCollection;
-use PHPUnit_Framework_MockObject_MockObject;
+use Dash\RouterInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Prophecy\Argument;
+use Prophecy\Prophecy\ProphecyInterface;
 
 /**
  * @covers Dash\RouteCollection\RouteCollection
@@ -23,185 +25,174 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class RouteCollectionTest extends TestCase
 {
     /**
-     * @var ServiceLocatorInterface|PHPUnit_Framework_MockObject_MockObject
+     * @var RouteInterface
      */
-    protected $serviceLocator;
-
-    /**
-     * @var RouteCollection
-     */
-    protected $collection;
-
-    /**
-     * @var RouteInterface|PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $mockRoute;
+    protected $route;
 
     public function setUp()
     {
-        $this->serviceLocator = $this->getMock(ServiceLocatorInterface::class);
-        $this->collection     = new RouteCollection($this->serviceLocator);
-        $this->mockRoute      = $this->getMock(RouteInterface::class);
+        $this->route = $this->getMock(RouterInterface::class);
     }
 
     public function testInsertWithRoute()
     {
-        $this->collection->insert('foo', $this->mockRoute, 0);
+        $collection = new RouteCollection($this->prophesize(RouteManager::class)->reveal(), [
+            'foo' => $this->route,
+        ]);
 
-        $this->assertEquals(1, $this->countCollection($this->collection));
-
-        foreach ($this->collection as $key => $value) {
-            $this->assertEquals('foo', $key);
-        }
+        $this->assertSame($this->route, $collection->get('foo'));
     }
 
     public function testInsertWithArray()
     {
-        $this
-            ->serviceLocator
-            ->expects($this->once())
-            ->method('get')
-            ->with($this->equalTo('foo'), $this->equalTo(['type' => 'foo']))
-            ->will($this->returnValue($this->mockRoute));
+        $routeManager = $this->prophesize(RouteManager::class);
+        $routeManager->get('bar', ['type' => 'bar'])->willReturn($this->route);
 
-        $this->collection->insert('foo', ['type' => 'foo'], 0);
-        $this->collection->insert('bar', ['type' => 'bar'], 0);
+        $collection = new RouteCollection($routeManager->reveal(), [
+            'foo' => ['type' => 'bar'],
+        ]);
 
-        $this->collection->get('foo');
+        $this->assertSame($this->route, $collection->get('foo'));
     }
 
     public function testInsertWithArrayWithoutType()
     {
-        $this
-            ->serviceLocator
-            ->expects($this->once())
-            ->method('get')
-            ->with($this->equalTo('Generic'), $this->equalTo(['foo']))
-            ->will($this->returnValue($this->mockRoute));
+        $routeManager = $this->prophesize(RouteManager::class);
+        $routeManager->get('Generic', [])->willReturn($this->route);
 
-        $this->collection->insert('foo', ['foo'], 0);
-        $this->collection->insert('bar', ['bar'], 0);
+        $collection = new RouteCollection($routeManager->reveal(), [
+            'foo' => [],
+        ]);
 
-        $this->collection->get('foo');
+        $this->assertSame($this->route, $collection->get('foo'));
     }
 
     public function testInsertInvalidRoute()
     {
         $this->setExpectedException(
-            InvalidArgumentException::class,
+            UnexpectedValueException::class,
             sprintf(
-                '$route must either be an array or implement %s, string given',
+                'Route definition must be an array or implement %s, integer given',
                 RouteInterface::class
             )
         );
-        $this->collection->insert('foo', 'bar', 0);
-    }
 
-    public function testRemove()
-    {
-        $this->collection->insert('foo', $this->mockRoute, 0);
-        $this->collection->insert('bar', $this->mockRoute, 0);
-
-        $this->assertEquals(2, $this->countCollection($this->collection));
-        $this->collection->remove('foo');
-        $this->assertEquals(1, $this->countCollection($this->collection));
-    }
-
-    public function testRemovingNonExistentRouteDoesNotYieldError()
-    {
-        $this->collection->remove('foo');
-    }
-
-    public function testClear()
-    {
-        $this->collection->insert('foo', $this->mockRoute, 0);
-        $this->collection->insert('bar', $this->mockRoute, 0);
-
-        $this->assertEquals(2, $this->countCollection($this->collection));
-        $this->collection->clear();
-        $this->assertEquals(0, $this->countCollection($this->collection));
-    }
-
-    public function testGet()
-    {
-        $this->collection->insert('foo', $this->mockRoute, 0);
-        $this->assertSame($this->mockRoute, $this->collection->get('foo'));
+        new RouteCollection($this->prophesize(RouteManager::class)->reveal(), [
+            'foo' => 0,
+        ]);
     }
 
     public function testGetNonExistentRoute()
     {
+        $collection = new RouteCollection($this->prophesize(RouteManager::class)->reveal(), []);
+
         $this->setExpectedException(OutOfBoundsException::class, 'Route with name "foo" was not found');
-        $this->collection->get('foo');
+        $collection->get('foo');
     }
 
     public function testLIFOOnly()
     {
-        $this->collection->insert('foo', $this->mockRoute, 0);
-        $this->collection->insert('bar', $this->mockRoute, 0);
-        $this->collection->insert('baz', $this->mockRoute, 0);
+        $collection = new RouteCollection($this->prophesize(RouteManager::class)->reveal(), [
+            'foo' => $this->route,
+            'bar' => $this->route,
+            'baz' => $this->route,
+        ]);
 
         $orders = [];
 
-        foreach ($this->collection as $key => $value) {
+        foreach ($collection as $key => $value) {
             $orders[] = $key;
         }
 
-        $this->assertEquals(['baz', 'bar', 'foo'], $orders);
+        $this->assertSame(['baz', 'bar', 'foo'], $orders);
     }
 
     public function testPriorityOnly()
     {
-        $this->collection->insert('foo', $this->mockRoute, 1);
-        $this->collection->insert('bar', $this->mockRoute, 0);
-        $this->collection->insert('baz', $this->mockRoute, 2);
+        $routes = [
+            'foo' => clone $this->route,
+            'bar' => clone $this->route,
+            'baz' => clone $this->route,
+        ];
+
+        $routes['foo']->priority = 1;
+        $routes['bar']->priority = 0;
+        $routes['baz']->priority = 2;
+
+        $collection = new RouteCollection($this->prophesize(RouteManager::class)->reveal(), $routes);
 
         $orders = [];
 
-        foreach ($this->collection as $key => $value) {
+        foreach ($collection as $key => $value) {
             $orders[] = $key;
         }
 
-        $this->assertEquals(['baz', 'foo', 'bar'], $orders);
+        $this->assertSame(['baz', 'foo', 'bar'], $orders);
     }
 
     public function testLIFOWithPriority()
     {
-        $this->collection->insert('foo', $this->mockRoute, 0);
-        $this->collection->insert('bar', $this->mockRoute, 0);
-        $this->collection->insert('baz', $this->mockRoute, 1);
+        $routes = [
+            'foo' => clone $this->route,
+            'bar' => clone $this->route,
+            'baz' => clone $this->route,
+        ];
+
+        $routes['foo']->priority = 0;
+        $routes['bar']->priority = 0;
+        $routes['baz']->priority = 1;
+
+        $collection = new RouteCollection($this->prophesize(RouteManager::class)->reveal(), $routes);
 
         $orders = [];
 
-        foreach ($this->collection as $key => $value) {
+        foreach ($collection as $key => $value) {
             $orders[] = $key;
         }
 
-        $this->assertEquals(['baz', 'bar', 'foo'], $orders);
+        $this->assertSame(['baz', 'bar', 'foo'], $orders);
     }
 
     public function testPriorityWithNegativesAndNull()
     {
-        $this->collection->insert('foo', $this->mockRoute, null);
-        $this->collection->insert('bar', $this->mockRoute, 1);
-        $this->collection->insert('baz', $this->mockRoute, -1);
+        $routes = [
+            'foo' => clone $this->route,
+            'bar' => clone $this->route,
+            'baz' => clone $this->route,
+        ];
+
+        $routes['foo']->priority = null;
+        $routes['bar']->priority = 0;
+        $routes['baz']->priority = -1;
+
+        $collection = new RouteCollection($this->prophesize(RouteManager::class)->reveal(), $routes);
 
         $orders = [];
 
-        foreach ($this->collection as $key => $value) {
+        foreach ($collection as $key => $value) {
             $orders[] = $key;
         }
 
-        $this->assertEquals(['bar', 'foo', 'baz'], $orders);
+        $this->assertSame(['foo', 'bar', 'baz'], $orders);
     }
 
-    protected function countCollection(RouteCollection $collection)
+    public function testPriorityWithArray()
     {
-        $count = 0;
+        $routeManager = $this->prophesize(RouteManager::class);
+        $routeManager->get('Generic', Argument::type('array'))->willReturn($this->route);
 
-        foreach ($collection as $item) {
-            $count++;
+        $collection = new RouteCollection($routeManager->reveal(), [
+            'foo' => ['priority' => 1],
+            'bar' => ['priority' => 0],
+            'baz' => ['priority' => 2],
+        ]);
+
+        $orders = [];
+
+        foreach ($collection as $key => $value) {
+            $orders[] = $key;
         }
 
-        return $count;
+        $this->assertSame(['baz', 'foo', 'bar'], $orders);
     }
 }

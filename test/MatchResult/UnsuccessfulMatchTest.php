@@ -17,7 +17,7 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class UnsuccessfulMatchTest extends TestCase
 {
-    public function testIsSuccess()
+    public function testIsFailure()
     {
         $this->assertFalse((new UnsuccessfulMatch())->isSuccess());
     }

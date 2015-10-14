@@ -14,6 +14,9 @@ namespace Dash\MatchResult;
  */
 abstract class AbstractFailedMatch implements MatchResultInterface
 {
+    /**
+     * {@inheritdoc}
+     */
     final public function isSuccess()
     {
         return false;

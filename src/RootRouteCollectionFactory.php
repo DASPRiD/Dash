@@ -7,29 +7,30 @@
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Parser;
+namespace Dash;
 
+use Dash\Route\RouteManager;
+use Dash\RouteCollection\RouteCollection;
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
- * Factory for the parser manager.
+ * Factory for the root route collection.
  */
-class ParserManagerFactory implements FactoryInterface
+class RootRouteCollectionFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
      *
-     * @return ParserManager
+     * @return RouteCollection
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $config = $container->has('config') ? $container->get('config') : [];
 
-        if (isset($config['dash']['parser_manager']) && is_array($config['dash']['parser_manager'])) {
-            return new ParserManager($container, $config['dash']['parser_manager']);
-        }
-
-        return new ParserManager($container);
+        return new RouteCollection(
+            $container->get(RouteManager::class),
+            isset($config['dash']['routes']) ? $config['dash']['routes'] : []
+        );
     }
 }

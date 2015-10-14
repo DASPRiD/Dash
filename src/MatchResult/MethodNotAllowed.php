@@ -20,7 +20,7 @@ class MethodNotAllowed extends AbstractFailedMatch
     protected $allowedMethods;
 
     /**
-     * @param array $allowedMethods
+     * @param string[] $allowedMethods
      */
     public function __construct(array $allowedMethods)
     {

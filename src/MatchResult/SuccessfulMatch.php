@@ -119,6 +119,9 @@ class SuccessfulMatch implements MatchResultInterface
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     final public function isSuccess()
     {
         return true;

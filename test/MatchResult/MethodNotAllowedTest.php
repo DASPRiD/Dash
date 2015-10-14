@@ -17,7 +17,7 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class MethodNotAllowedTest extends TestCase
 {
-    public function testIsSuccess()
+    public function testIsFailure()
     {
         $this->assertFalse((new MethodNotAllowed([]))->isSuccess());
     }

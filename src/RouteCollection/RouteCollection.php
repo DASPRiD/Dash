@@ -11,8 +11,9 @@ namespace Dash\RouteCollection;
 
 use Dash\Exception;
 use Dash\Route\RouteInterface;
+use Dash\Route\RouteManager;
+use Dash\RouterInterface;
 use IteratorAggregate;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Generic route collection which uses a service locator to instantiate routes.
@@ -20,7 +21,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class RouteCollection implements IteratorAggregate, RouteCollectionInterface
 {
     /**
-     * @var ServiceLocatorInterface
+     * @var RouteManager
      */
     protected $routeManager;
 
@@ -30,93 +31,78 @@ class RouteCollection implements IteratorAggregate, RouteCollectionInterface
     protected $routes = [];
 
     /**
-     * @var int
+     * @param RouteManager $routeManager
+     * @param array[]      $routes
      */
-    protected $serial = 0;
-
-    /**
-     * @var bool
-     */
-    protected $sorted = false;
-
-    /**
-     * @param ServiceLocatorInterface $routeManager
-     */
-    public function __construct(ServiceLocatorInterface $routeManager)
+    public function __construct(RouteManager $routeManager, array $routes)
     {
         $this->routeManager = $routeManager;
+        $serial = 0;
+
+        foreach ($routes as $name => $route) {
+            if (is_array($route)) {
+                $this->routes[$name] = [
+                    'priority' => isset($route['priority']) ? $route['priority'] : 1,
+                    'serial'   => ++$serial,
+                    'options'  => $route,
+                    'instance' => null,
+                ];
+            } elseif ($route instanceof RouterInterface) {
+                $this->routes[$name] = [
+                    'priority' => isset($route->priority) ? $route->priority : 1,
+                    'serial'   => ++$serial,
+                    'options'  => null,
+                    'instance' => $route,
+                ];
+            } else {
+                throw new Exception\UnexpectedValueException(sprintf(
+                    'Route definition must be an array or implement %s, %s given',
+                    RouteInterface::class,
+                    is_object($route) ? get_class($route) : gettype($route)
+                ));
+            }
+
+        }
+
+        // Note: the order of the elements in the array is important for the sorting to work, do not change it!
+        arsort($this->routes);
     }
 
     /**
-     * @throws Exception\InvalidArgumentException
+     * {@inheritdoc}
      */
-    public function insert($name, $route, $priority = 1)
-    {
-        if (!($route instanceof RouteInterface || is_array($route))) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '$route must either be an array or implement %s, %s given',
-                RouteInterface::class,
-                is_object($route) ? get_class($route) : gettype($route)
-            ));
-        }
-
-        $this->sorted = false;
-
-        // Note: the order of the elements in the array are important for the
-        // sorting to work, do not change!
-        $this->routes[$name] = [
-            'priority' => (int) $priority,
-            'serial'   => $this->serial++,
-            'route'    => $route,
-        ];
-    }
-
-    public function remove($name)
-    {
-        if (!isset($this->routes[$name])) {
-            return;
-        }
-
-        unset($this->routes[$name]);
-    }
-
-    public function clear()
-    {
-        $this->routes = [];
-        $this->serial = 0;
-        $this->sorted = true;
-    }
-
     public function get($name)
     {
         if (!isset($this->routes[$name])) {
             throw new Exception\OutOfBoundsException(sprintf('Route with name "%s" was not found', $name));
         }
 
-        $route = $this->routes[$name]['route'];
+        $route = &$this->routes[$name];
 
-        if (!$route instanceof RouteInterface) {
-            $type  = (!isset($route['type']) ? 'Generic' : $route['type']);
-            $route = $this->routes[$name]['route'] = $this->routeManager->get($type, $route);
+        if (null === $route['instance']) {
+            $route['instance'] = $this->routeManager->get(
+                !isset($route['options']['type']) ? 'Generic' : $route['options']['type'],
+                $route['options']
+            );
         }
 
-        return $route;
+        return $route['instance'];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getIterator()
     {
-        if (!$this->sorted) {
-            arsort($this->routes);
-            $this->sorted = true;
-        }
-
-        foreach ($this->routes as $name => $route) {
-            if (!$route['route'] instanceof RouteInterface) {
-                $type           = (!isset($route['type']) ? 'Generic' : $route['type']);
-                $route['route'] = $this->routes[$name]['route'] = $this->routeManager->get($type, $route['route']);
+        foreach ($this->routes as $name => &$route) {
+            if (null === $route['instance']) {
+                $route['instance'] = $this->routeManager->get(
+                    !isset($route['options']['type']) ? 'Generic' : $route['options']['type'],
+                    $route['options']
+                );
             }
 
-            yield $name => $route['route'];
+            yield $name => $route['instance'];
         }
     }
 }

@@ -29,7 +29,7 @@ interface RouterInterface
      *
      * @param  array $params
      * @param  array $options
-     * @return mixed
+     * @return string
      */
     public function assemble(array $params, array $options);
 }

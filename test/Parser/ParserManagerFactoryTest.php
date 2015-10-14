@@ -9,9 +9,10 @@
 
 namespace DashTest\Parser;
 
+use Dash\Parser\ParserManager;
 use Dash\Parser\ParserManagerFactory;
+use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\ServiceManager;
 
 /**
  * @covers Dash\Parser\ParserManagerFactory
@@ -20,36 +21,30 @@ class ParserManagerFactoryTest extends TestCase
 {
     public function testFactorySucceedsWithoutConfig()
     {
-        $factory = new ParserManagerFactory();
-        $factory($this->getServiceLocator([]), '');
+        $factory       = new ParserManagerFactory();
+        $parserManager = $factory($this->getMock(ContainerInterface::class), '');
+
+        $this->assertInstanceOf(ParserManager::class, $parserManager);
     }
 
     public function testFactoryWithConfig()
     {
-        $factory       = new ParserManagerFactory();
-        $parserManager = $factory($this->getServiceLocator([
+        $container = $this->prophesize(ContainerInterface::class);
+        $container->has('config')->willReturn(true);
+        $container->get('config')->willReturn([
             'dash' => [
                 'parser_manager' => [
                     'services' => [
-                        'foo' => [],
+                        'test' => true,
                     ],
                 ],
             ],
-        ]), '');
-
-        $this->assertTrue($parserManager->has('foo'));
-    }
-
-    /**
-     * @param  array $config
-     * @return ServiceManager
-     */
-    protected function getServiceLocator(array $config)
-    {
-        return new ServiceManager([
-            'services' => [
-                'config' => $config,
-            ]
         ]);
+
+        $factory       = new ParserManagerFactory();
+        $parserManager = $factory($container->reveal(), '');
+
+        $this->assertInstanceOf(ParserManager::class, $parserManager);
+        $this->assertAttributeSame(['test' => true], 'services', $parserManager);
     }
 }

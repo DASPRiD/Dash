@@ -19,33 +19,6 @@ use Traversable;
 interface RouteCollectionInterface extends Traversable
 {
     /**
-     * Inserts a new route into the list.
-     *
-     * The route may either be valid route object or a specifications for it.
-     * If a route with the same name already exists, it will be replaced.
-     *
-     * When two routes shares the same priority, the last one inserted takes
-     * precedence.
-     *
-     * @param string               $name
-     * @param RouteInterface|array $route
-     * @param int                  $priority
-     */
-    public function insert($name, $route, $priority = 1);
-
-    /**
-     * Removes a route from the list.
-     *
-     * @param string $name
-     */
-    public function remove($name);
-
-    /**
-     * Clears the entire list.
-     */
-    public function clear();
-
-    /**
      * Gets a specific route.
      *
      * @param  string $name

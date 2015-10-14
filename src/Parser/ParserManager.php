@@ -17,17 +17,17 @@ use Zend\ServiceManager\AbstractPluginManager;
 class ParserManager extends AbstractPluginManager
 {
     /**
-     * @var bool
+     * {@inheritdoc}
      */
     protected $shareByDefault = false;
 
     /**
-     * @var string
+     * {@inheritdoc}
      */
     protected $instanceOf = ParserInterface::class;
 
     /**
-     * @var array
+     * {@inheritdoc}
      */
     protected $factories = [
         'HostnameSegment' => HostnameSegmentFactory::class,
