@@ -14,51 +14,40 @@ use Dash\Parser\ParserManager;
 use Dash\Route\RouteManager;
 use Dash\Router;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\ServiceManager;
+use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * @covers Dash\Module
  */
 class ModuleTest extends TestCase
 {
-    /**
-     * @var Module
-     */
-    protected $module;
-
-    public function setUp()
+    public function testGetConfig()
     {
-        $this->module = new Module();
+        $config = (new Module())->getConfig();
+
+        $this->assertInternalType('array', $config);
+        $this->assertArrayHasKey('service_manager', $config);
+        $this->assertInternalType('array', $config['service_manager']);
+        $this->assertArrayHasKey('factories', $config['service_manager']);
+        $this->assertInternalType('array', $config['service_manager']['factories']);
+
+        $this->assertArrayHasKey(Router::class, $config['service_manager']['factories']);
+        $this->assertImplements(FactoryInterface::class, $config['service_manager']['factories'][Router::class]);
+
+        $this->assertArrayHasKey(ParserManager::class, $config['service_manager']['factories']);
+        $this->assertImplements(FactoryInterface::class, $config['service_manager']['factories'][ParserManager::class]);
+
+        $this->assertArrayHasKey(RouteManager::class, $config['service_manager']['factories']);
+        $this->assertImplements(FactoryInterface::class, $config['service_manager']['factories'][RouteManager::class]);
+
+        $this->assertSame($config, unserialize(serialize($config)));
     }
 
-    public function testServiceSetup()
+    protected function assertImplements($expected, $actual)
     {
-        $config = $this->module->getConfig();
-        $serviceManager = new ServiceManager(
-            $config['service_manager'] + [
-                'services' => [
-                    'config' => [
-                        'dash' => [
-                            'base_uri' => 'http://example.com/'
-                        ],
-                    ],
-                ],
-            ]
-        );
-
-        $this->assertInstanceOf(
-            ParserManager::class,
-            $serviceManager->get(ParserManager::class)
-        );
-
-        $this->assertInstanceOf(
-            RouteManager::class,
-            $serviceManager->get(RouteManager::class)
-        );
-
-        $this->assertInstanceOf(
-            Router::class,
-            $serviceManager->get(Router::class)
+        $this->assertTrue(
+            is_subclass_of($actual, $expected),
+            sprintf('%s does not implement %s', $actual, $expected)
         );
     }
 }
