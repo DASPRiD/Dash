@@ -15,7 +15,7 @@ use Dash\MatchResult\SchemeNotAllowed;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Parser\ParserInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * A generic route which takes care of all HTTP aspects.
@@ -57,7 +57,7 @@ class Generic implements RouteInterface
     protected $defaults = [];
 
     /**
-     * @var RouteCollectionInterface
+     * @var RouteCollectionInterface|RouteInterface[]|null
      */
     protected $children;
 
@@ -108,7 +108,7 @@ class Generic implements RouteInterface
      *
      * @throws Exception\UnexpectedValueException
      */
-    public function match(RequestInterface $request, $pathOffset)
+    public function match(ServerRequestInterface $request, $pathOffset)
     {
         $uri = $request->getUri();
 
@@ -163,6 +163,11 @@ class Generic implements RouteInterface
         if ($completePathMatched) {
             if (null === $this->methods || isset($this->methods[$request->getMethod()])) {
                 return $match;
+            }
+
+            if (!$this->methods) {
+                // Special case: when no methods are defined at all, this route may simply not terminate.
+                return null;
             }
 
             return new MethodNotAllowed(array_keys($this->methods));

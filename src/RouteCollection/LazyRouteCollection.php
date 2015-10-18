@@ -10,15 +10,13 @@
 namespace Dash\RouteCollection;
 
 use Dash\Exception;
-use Dash\Route\RouteInterface;
 use Dash\Route\RouteManager;
-use Dash\RouterInterface;
 use IteratorAggregate;
 
 /**
- * Generic route collection which uses a service locator to instantiate routes.
+ * Lazy route collection which only instantiates routes when required.
  */
-class RouteCollection implements IteratorAggregate, RouteCollectionInterface
+class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
 {
     /**
      * @var RouteManager
@@ -40,28 +38,19 @@ class RouteCollection implements IteratorAggregate, RouteCollectionInterface
         $serial = 0;
 
         foreach ($routes as $name => $route) {
-            if (is_array($route)) {
-                $this->routes[$name] = [
-                    'priority' => isset($route['priority']) ? $route['priority'] : 1,
-                    'serial'   => ++$serial,
-                    'options'  => $route,
-                    'instance' => null,
-                ];
-            } elseif ($route instanceof RouterInterface) {
-                $this->routes[$name] = [
-                    'priority' => isset($route->priority) ? $route->priority : 1,
-                    'serial'   => ++$serial,
-                    'options'  => null,
-                    'instance' => $route,
-                ];
-            } else {
+            if (!is_array($route)) {
                 throw new Exception\UnexpectedValueException(sprintf(
-                    'Route definition must be an array or implement %s, %s given',
-                    RouteInterface::class,
+                    'Route definition must be an array, %s given',
                     is_object($route) ? get_class($route) : gettype($route)
                 ));
             }
 
+            $this->routes[$name] = [
+                'priority' => isset($route['priority']) ? $route['priority'] : 1,
+                'serial'   => ++$serial,
+                'options'  => $route,
+                'instance' => null,
+            ];
         }
 
         // Note: the order of the elements in the array is important for the sorting to work, do not change it!

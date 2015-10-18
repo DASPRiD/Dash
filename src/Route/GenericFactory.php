@@ -10,8 +10,7 @@
 namespace Dash\Route;
 
 use Dash\Parser\ParserManager;
-use Dash\Parser\Segment;
-use Dash\RouteCollection\RouteCollection;
+use Dash\RouteCollection\LazyRouteCollection;
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
@@ -20,7 +19,7 @@ class GenericFactory implements FactoryInterface
     /**
      * {@inheritdoc}
      *
-     * @return Segment
+     * @return Generic
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
@@ -34,13 +33,13 @@ class GenericFactory implements FactoryInterface
         }
 
         if (isset($options['defaults']) && isset($options[1])) {
-            $options['defaults'] = $options['defaults'] + $options[1];
+            $options['defaults'] += $options[1];
         } elseif (isset($options[1])) {
             $options['defaults'] = $options[1];
         }
 
         if (isset($options['methods']) && isset($options[2])) {
-            $options['methods'] = $options['methods'] + $options[2];
+            $options['methods'] = array_merge($options[2], $options['methods']);
         } elseif (isset($options[2])) {
             $options['methods'] = $options[2];
         }
@@ -58,7 +57,7 @@ class GenericFactory implements FactoryInterface
 
         if (isset($options['hostname_parser'])) {
             $hostnameParser = $parserManager->get($options['hostname_parser'], $options);
-        } elseif (isset($options['path'])) {
+        } elseif (isset($options['hostname'])) {
             $hostnameParser = $parserManager->get('HostnameSegment', $options);
         } else {
             $hostnameParser = null;
@@ -66,7 +65,7 @@ class GenericFactory implements FactoryInterface
 
         // Setup children if they exist
         if (isset($options['children'])) {
-            $children = new RouteCollection($container->get(RouteManager::class), $options['children']);
+            $children = new LazyRouteCollection($container->get(RouteManager::class), $options['children']);
         } else {
             $children = null;
         }

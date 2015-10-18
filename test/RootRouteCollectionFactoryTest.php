@@ -11,7 +11,7 @@ namespace DashTest;
 
 use Dash\RootRouteCollectionFactory;
 use Dash\Route\RouteManager;
-use Dash\RouteCollection\RouteCollection;
+use Dash\RouteCollection\LazyRouteCollection;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
@@ -20,25 +20,12 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class RootRouteCollectionFactoryTest extends TestCase
 {
-    protected $config = [
-        'dash' => [
-            'routes' => [
-                'user' => ['/user', ['action' => 'index', 'controller' => 'UserController'], 'children' => [
-                    'create' => ['/create', ['action' => 'create'], ['get', 'post']],
-                    'edit' => ['/edit/:id', ['action' => 'edit'], ['get', 'post'], 'constraints' => ['id' => '\d+']],
-                    'delete' => ['/delete/:id', ['action' => 'delete'], 'constraints' => ['id' => '\d+']],
-                ]],
-            ],
-            'base_uri' => 'http://example.com/'
-        ],
-    ];
-
     public function testFactorySucceedsWithoutConfig()
     {
         $factory    = new RootRouteCollectionFactory();
         $collection = $factory($this->getContainer(), '');
 
-        $this->assertInstanceOf(RouteCollection::class, $collection);
+        $this->assertInstanceOf(LazyRouteCollection::class, $collection);
     }
 
     public function testFactorySucceedsWithEmptyConfig()
@@ -46,7 +33,7 @@ class RootRouteCollectionFactoryTest extends TestCase
         $factory    = new RootRouteCollectionFactory();
         $collection = $factory($this->getContainer([]), '');
 
-        $this->assertInstanceOf(RouteCollection::class, $collection);
+        $this->assertInstanceOf(LazyRouteCollection::class, $collection);
     }
 
     public function testFactoryWithConfig()
@@ -60,7 +47,7 @@ class RootRouteCollectionFactoryTest extends TestCase
             ],
         ]), '');
 
-        $this->assertInstanceOf(RouteCollection::class, $collection);
+        $this->assertInstanceOf(LazyRouteCollection::class, $collection);
         $this->assertAttributeSame([
             'foo' => [
                 'priority' => 1,
@@ -72,14 +59,13 @@ class RootRouteCollectionFactoryTest extends TestCase
     }
 
     /**
+     * @param  array $config
      * @return ContainerInterface
      */
     protected function getContainer(array $config = null)
     {
         $container = $this->prophesize(ContainerInterface::class);
-        $container->get(RouteManager::class)->will(function () use ($container) {
-            return new RouteManager($container->reveal());
-        });
+        $container->get(RouteManager::class)->willReturn($this->prophesize(RouteManager::class)->reveal());
 
         if (null !== $config) {
             $container->get('config')->willReturn($config);

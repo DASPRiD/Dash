@@ -17,13 +17,13 @@ use Dash\MatchResult\UnsuccessfulMatch;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\RouterInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 
 class Router implements RouterInterface
 {
     /**
-     * @var RouteCollectionInterface
+     * @var RouteCollectionInterface|RouteInterface[]
      */
     protected $routeCollection;
 
@@ -71,11 +71,10 @@ class Router implements RouterInterface
      *
      * @throws UnexpectedValueException
      */
-    public function match(RequestInterface $request)
+    public function match(ServerRequestInterface $request)
     {
         $basePathLength = strlen($this->baseUri['path']);
 
-        /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
             if (null === ($matchResult = $route->match($request, $basePathLength))) {
                 continue;

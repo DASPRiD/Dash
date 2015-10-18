@@ -22,7 +22,7 @@ class HostnameSegmentFactoryTest extends TestCase
     public function testFactoryWithoutConfiguration()
     {
         $factory = new HostnameSegmentFactory();
-        $parser  = $factory($this->getMock(ContainerInterface::class), '');
+        $parser  = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
 
         $this->assertInstanceOf(Segment::class, $parser);
         $this->assertAttributeSame('.', 'delimiter', $parser);
@@ -34,7 +34,7 @@ class HostnameSegmentFactoryTest extends TestCase
     {
         $factory = new HostnameSegmentFactory();
         $parser = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':foo.example.com',
@@ -52,7 +52,7 @@ class HostnameSegmentFactoryTest extends TestCase
     {
         $factory = new HostnameSegmentFactory();
         $parser1 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':foo.example.com',
@@ -60,7 +60,7 @@ class HostnameSegmentFactoryTest extends TestCase
             ]
         );
         $parser2 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':foo.example.com',
@@ -68,7 +68,7 @@ class HostnameSegmentFactoryTest extends TestCase
             ]
         );
         $parser3 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':bar.example.com',

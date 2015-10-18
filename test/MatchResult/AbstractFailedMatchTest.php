@@ -19,6 +19,6 @@ class AbstractFailedMatchTest extends TestCase
 {
     public function testIsFailure()
     {
-        $this->assertFalse($this->getMock(AbstractFailedMatch::class)->isSuccess());
+        $this->assertFalse($this->prophesize()->willExtend(AbstractFailedMatch::class)->reveal()->isSuccess());
     }
 }

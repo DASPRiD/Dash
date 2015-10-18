@@ -28,7 +28,7 @@ class BaseUriFactory implements FactoryInterface
         $config = $container->has('config') ? $container->get('config') : [];
 
         if (!isset($config['dash']['base_uri'])) {
-            throw new ServiceNotCreatedException('Missing "base_uri" configuration in "dash"');
+            throw new ServiceNotCreatedException('Missing "base_uri" key in "dash" section');
         }
 
         return $config['dash']['base_uri'];

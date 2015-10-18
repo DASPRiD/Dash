@@ -20,12 +20,12 @@ class SchemeNotAllowedTest extends TestCase
 {
     public function testIsFailure()
     {
-        $this->assertFalse((new SchemeNotAllowed($this->getMock(UriInterface::class)))->isSuccess());
+        $this->assertFalse((new SchemeNotAllowed($this->prophesize(UriInterface::class)->reveal()))->isSuccess());
     }
 
     public function testGetAllowedUri()
     {
-        $uri = $this->getMock(UriInterface::class);
+        $uri = $this->prophesize(UriInterface::class)->reveal();
         $this->assertSame($uri, (new SchemeNotAllowed($uri))->getAllowedUri());
     }
 }

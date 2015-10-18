@@ -22,7 +22,7 @@ class ParserManagerFactoryTest extends TestCase
     public function testFactorySucceedsWithoutConfig()
     {
         $factory       = new ParserManagerFactory();
-        $parserManager = $factory($this->getMock(ContainerInterface::class), '');
+        $parserManager = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
 
         $this->assertInstanceOf(ParserManager::class, $parserManager);
     }

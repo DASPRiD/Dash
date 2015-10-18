@@ -9,106 +9,137 @@
 
 namespace DashTest\Route;
 
-use Dash\MatchResult\SuccessfulMatch;
+use Dash\Parser\ParserInterface;
 use Dash\Parser\ParserManager;
+use Dash\Route\Generic;
 use Dash\Route\GenericFactory;
 use Dash\Route\RouteManager;
-use GuzzleHttp\Psr7\Uri;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use Psr\Http\Message\RequestInterface;
-use Zend\ServiceManager\ServiceManager;
+use Prophecy\Argument;
 
 /**
  * @covers Dash\Route\GenericFactory
  */
 class GenericFactoryTest extends TestCase
 {
-    public function setUp()
-    {
-        $this->markTestSkipped('Tests not refactored yet');
-    }
-
     public function testFactoryWithoutConfiguration()
     {
         $factory = new GenericFactory();
-        $route   = $factory($this->getMock(ContainerInterface::class), '');
+        $route   = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
 
-        $this->assertNull($route->match($this->getHttpRequest(), 0));
+        $this->assertInstanceOf(Generic::class, $route);
+        $this->assertAttributeSame(null, 'pathParser', $route);
+        $this->assertAttributeSame([], 'defaults', $route);
+        $this->assertAttributeSame(null, 'methods', $route);
+        $this->assertAttributeSame(null, 'hostnameParser', $route);
+        $this->assertAttributeSame(null, 'port', $route);
+        $this->assertAttributeSame(null, 'secure', $route);
+        $this->assertAttributeSame(null, 'children', $route);
     }
 
-    public function testFactoryWithConfiguration()
+    public function testFactoryWithEmptyConfiguration()
     {
         $factory = new GenericFactory();
-        $route = $factory($this->getServiceLocator(), '', [
+        $route   = $factory($this->prophesize(ContainerInterface::class)->reveal(), '', []);
+
+        $this->assertInstanceOf(Generic::class, $route);
+        $this->assertAttributeSame(null, 'pathParser', $route);
+        $this->assertAttributeSame([], 'defaults', $route);
+        $this->assertAttributeSame(null, 'methods', $route);
+        $this->assertAttributeSame(null, 'hostnameParser', $route);
+        $this->assertAttributeSame(null, 'port', $route);
+        $this->assertAttributeSame(null, 'secure', $route);
+        $this->assertAttributeSame(null, 'children', $route);
+    }
+
+    public function testFactoryWithFullConfiguration()
+    {
+        $factory = new GenericFactory();
+        $route = $factory($this->getContainer('/foo', 'example.com'), '', [
             '/foo',
-            ['action' => 'action', 'controller' => 'controller'],
-            'get',
+            ['foo' => 'bar'],
+            ['POST'],
             'hostname' => 'example.com',
+            'port' => 88,
             'secure' => true,
             'children' => [
                 'bar' => ['path' => '/bar'],
             ],
         ]);
-        $this->assertInstanceOf(SuccessfulMatch::class, $route->match($this->getHttpRequest(), 0));
+
+        $this->assertInstanceOf(Generic::class, $route);
+        $this->assertAttributeSame(['foo' => 'bar'], 'defaults', $route);
+        $this->assertAttributeSame(['POST' => 0], 'methods', $route);
+        $this->assertAttributeSame(88, 'port', $route);
+        $this->assertAttributeSame(true, 'secure', $route);
+        $this->assertArrayHasKey('bar', self::readAttribute(self::readAttribute($route, 'children'), 'routes'));
     }
 
-    public function testPathOverwritesParameter()
+    public function testParameterOverriding()
     {
         $factory = new GenericFactory();
-        $route = $factory($this->getServiceLocator(), '', [
-            '/bar',
-            ['action' => 'action', 'controller' => 'controller'],
-            'get',
-            'hostname' => 'example.com',
-            'secure' => true,
-            'children' => [
-                'bar' => ['path' => '/bar'],
-            ],
-            'path' => '/foo',
+        $route = $factory($this->getContainer('/bar', null), '', [
+            '/foo',
+            ['foo' => 'bar', 'baz' => 'bat'],
+            ['POST'],
+            'path' => '/bar',
+            'defaults' => ['foo' => 'baz', 'bat' => 'bar'],
+            'methods' => ['PUT'],
         ]);
-        $this->assertInstanceOf(SuccessfulMatch::class, $route->match($this->getHttpRequest(), 0));
+
+        $this->assertInstanceOf(Generic::class, $route);
+        $this->assertAttributeSame(['foo' => 'baz', 'bat' => 'bar', 'baz' => 'bat'], 'defaults', $route);
+        $this->assertAttributeSame(['POST' => 0, 'PUT' => 1], 'methods', $route);
     }
 
     public function testFactoryWithSpecifiedParsers()
     {
+        $pathParser     = $this->prophesize(ParserInterface::class)->reveal();
+        $hostnameParser = $this->prophesize(ParserInterface::class)->reveal();
+
         $factory = new GenericFactory();
-        $route = $factory($this->getServiceLocator(), '', [
-            '/foo/bar',
-            'hostname' => 'example.com',
-            'path_parser' => 'PathSegment',
-            'hostname_parser' => 'HostnameSegment',
+        $route = $factory($this->getContainer(null, null, $pathParser, $hostnameParser), '', [
+            'path_parser' => 'CustomPath',
+            'hostname_parser' => 'CustomHostname',
         ]);
-        $this->assertInstanceOf(SuccessfulMatch::class, $route->match($this->getHttpRequest(), 0));
-    }
 
-    protected function getHttpRequest()
-    {
-        $request = $this->getMock(RequestInterface::class);
-        $uri     = new Uri('https://example.com/foo/bar');
-
-        $request
-            ->expects($this->any())
-            ->method('getUri')
-            ->will($this->returnValue($uri));
-
-        return $request;
+        $this->assertInstanceOf(Generic::class, $route);
+        $this->assertAttributeSame($pathParser, 'pathParser', $route);
+        $this->assertAttributeSame($hostnameParser, 'hostnameParser', $route);
     }
 
     /**
-     * @return ServiceManager
+     * @param  string          $pathPattern
+     * @param  string          $hostnamePattern
+     * @param  ParserInterface $pathParser
+     * @param  ParserInterface $hostnameParser
+     * @return ContainerInterface
      */
-    protected function getServiceLocator()
-    {
-        return new ServiceManager([
-            'factories' => [
-                ParserManager::class => function (ContainerInterface $container) {
-                    return new ParserManager($container);
-                },
-                RouteManager::class => function (ContainerInterface $container) {
-                    return new RouteManager($container);
-                },
-            ],
-        ]);
+    protected function getContainer(
+        $pathPattern,
+        $hostnamePattern,
+        ParserInterface $pathParser = null,
+        ParserInterface $hostnameParser = null
+    ) {
+        $parserManager = $this->prophesize(ParserManager::class);
+        $parserManager->get('PathSegment', Argument::withEntry('path', $pathPattern))
+            ->willReturn($this->prophesize(ParserInterface::class)->reveal());
+        $parserManager->get('HostnameSegment', Argument::withEntry('hostname', $hostnamePattern))
+            ->willReturn($this->prophesize(ParserInterface::class)->reveal());
+
+        if (null !== $pathParser) {
+            $parserManager->get('CustomPath', Argument::type('array'))->willReturn($pathParser);
+        }
+
+        if (null !== $hostnameParser) {
+            $parserManager->get('CustomHostname', Argument::type('array'))->willReturn($hostnameParser);
+        }
+
+        $container = $this->prophesize(ContainerInterface::class);
+        $container->get(RouteManager::class)->willReturn($this->prophesize(RouteManager::class)->reveal());
+        $container->get(ParserManager::class)->willReturn($parserManager->reveal());
+
+        return $container->reveal();
     }
 }

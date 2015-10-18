@@ -22,7 +22,7 @@ class PathSegmentFactoryTest extends TestCase
     public function testFactoryWithoutConfiguration()
     {
         $factory = new PathSegmentFactory();
-        $parser  = $factory($this->getMock(ContainerInterface::class), '');
+        $parser  = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
 
         $this->assertInstanceOf(Segment::class, $parser);
         $this->assertAttributeSame('/', 'delimiter', $parser);
@@ -34,7 +34,7 @@ class PathSegmentFactoryTest extends TestCase
     {
         $factory = new PathSegmentFactory();
         $parser = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'path'        => '/:foo/bar',
@@ -52,7 +52,7 @@ class PathSegmentFactoryTest extends TestCase
     {
         $factory = new PathSegmentFactory();
         $parser1 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
             'path'        => '/:foo/bar',
@@ -60,7 +60,7 @@ class PathSegmentFactoryTest extends TestCase
             ]
         );
         $parser2 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
             'path'        => '/:foo/bar',
@@ -68,7 +68,7 @@ class PathSegmentFactoryTest extends TestCase
             ]
         );
         $parser3 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
             'path'        => '/:bar/bar',

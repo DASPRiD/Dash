@@ -20,7 +20,7 @@ class RouteManagerTest extends TestCase
 {
     public function testRegisteredServices()
     {
-        $routeManager = new RouteManager($this->getMock(ContainerInterface::class));
+        $routeManager = new RouteManager($this->prophesize(ContainerInterface::class)->reveal());
         $this->assertTrue($routeManager->has('Generic'));
     }
 }

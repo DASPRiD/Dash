@@ -9,120 +9,166 @@
 
 namespace DashTest;
 
+use Dash\Exception\InvalidArgumentException;
 use Dash\Exception\RuntimeException;
-use Dash\Exception\UnexpectedValueException;
-use Dash\MatchResult\AbstractFailedMatch;
 use Dash\MatchResult\MatchResultInterface;
 use Dash\MatchResult\SuccessfulMatch;
+use Dash\MatchResult\UnsuccessfulMatch;
 use Dash\Route\AssemblyResult;
 use Dash\Route\RouteInterface;
-use Dash\RouteCollection\RouteCollection;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\Router;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Uri;
+use IteratorAggregate;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Prophecy\Argument;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
+use UnexpectedValueException;
 
 /**
  * @covers Dash\Router
  */
 class RouterTest extends TestCase
 {
-    public function setUp()
+    public function testSetBaseUriFromObject()
     {
-        $this->markTestSkipped('Tests not refactored yet');
-    }
-    
-    public function testRetrieveRouteCollection()
-    {
-        $routeCollection = $this->getMock(RouteCollectionInterface::class);
-        $router          = new Router($routeCollection, new Uri('http://example.com/foo'));
+        $baseUri = $this->prophesize(UriInterface::class);
+        $baseUri->getScheme()->willReturn('http');
+        $baseUri->getHost()->willReturn('example.com');
+        $baseUri->getPort()->willReturn(null);
+        $baseUri->getPath()->willReturn('/foo/');
 
-        $this->assertSame($routeCollection, $router->getRouteCollection());
-    }
+        $router = new Router($this->buildRouteCollection(), $baseUri->reveal());
 
-    public function testSuccessfulRouteMatchIsReturned()
-    {
-        $routeCollection    = new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-        $router             = new Router($routeCollection, new Uri('http://example.com/foo'));
-        $request            = $this->getHttpRequest();
-        $expectedRouteMatch = new SuccessfulMatch();
-
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('match')
-            ->with($this->equalTo($request))
-            ->will($this->returnValue($expectedRouteMatch));
-
-        $unsuccessfulRoute = $this->getMock(RouteInterface::class);
-        $unsuccessfulRoute
-            ->expects($this->once())
-            ->method('match')
-            ->with($this->equalTo($request))
-            ->will($this->returnValue(null));
-
-        $routeCollection->insert('foo', $route);
-        $routeCollection->insert('bar', $unsuccessfulRoute);
-
-        $routeMatch = $router->match($request);
-        $this->assertSame($expectedRouteMatch, $routeMatch);
-        $this->assertEquals('foo', $routeMatch->getRouteName());
+        $this->assertAttributeSame([
+            'scheme' => 'http',
+            'host' => 'example.com',
+            'port' => 80,
+            'path' => '/foo',
+        ], 'baseUri', $router);
     }
 
-    public function testUnsuccessfulRouteMatchIsReturned()
+    public function testSetBaseUriFromString()
     {
-        $routeCollection    = new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-        $router             = new Router($routeCollection, new Uri('http://example.com/foo'));
-        $request            = $this->getHttpRequest();
-        $expectedRouteMatch = $this->getMock(AbstractFailedMatch::class);
+        $router = new Router($this->buildRouteCollection(), 'http://example.com/foo/');
 
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('match')
-            ->with($this->equalTo($request))
-            ->will($this->returnValue($expectedRouteMatch));
+        $this->assertAttributeSame([
+            'scheme' => 'http',
+            'host' => 'example.com',
+            'port' => 80,
+            'path' => '/foo',
+        ], 'baseUri', $router);
+    }
 
-        $routeCollection->insert('foo', $route);
+    public function testExceptionOnMalformedBaseUriString()
+    {
+        $this->setExpectedException(
+            InvalidArgumentException::class,
+            'Base URI "example.com:99999" does not appear to be a valid URI'
+        );
+        new Router($this->buildRouteCollection(), 'example.com:99999');
+    }
 
-        $routeMatch = $router->match($request);
-        $this->assertSame($expectedRouteMatch, $routeMatch);
+    public function testExceptionOnInvalidBaseUri()
+    {
+        $this->setExpectedException(
+            InvalidArgumentException::class,
+            sprintf(
+                'Expected base URI of type string or %s, got boolean',
+                UriInterface::class
+            )
+        );
+        new Router($this->buildRouteCollection(), true);
+    }
+
+    public function testExceptionOnNonCanonicalBaseUri()
+    {
+        $this->setExpectedException(
+            InvalidArgumentException::class,
+            'Base URI "/foo/" does not seem to be canonical'
+        );
+        new Router($this->buildRouteCollection(), '/foo/');
+    }
+
+    public function testSuccessfulMatchResultIsReturned()
+    {
+        $expectedMatchResult = new SuccessfulMatch();
+
+        $successfulRoute = $this->prophesize(RouteInterface::class);
+        $successfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn($expectedMatchResult);
+
+        $unsuccessfulRoute = $this->prophesize(RouteInterface::class);
+        $unsuccessfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn(null);
+
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $unsuccessfulRoute->reveal(),
+            'bar' => $successfulRoute->reveal(),
+        ]), 'http://example.com');
+
+        $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
+        $this->assertSame($expectedMatchResult, $matchResult);
+        $this->assertSame('bar', $matchResult->getRouteName());
+    }
+
+    public function testUnsuccessfulMatchResultIsReturned()
+    {
+        $expectedMatchResult = new UnsuccessfulMatch();
+
+        $unsuccessfulRoute = $this->prophesize(RouteInterface::class);
+        $unsuccessfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn($expectedMatchResult);
+
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $unsuccessfulRoute->reveal(),
+        ]), 'http://example.com');
+
+        $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
+        $this->assertSame($expectedMatchResult, $matchResult);
+    }
+
+    public function testUnsuccessfulMatchResultIsCreatedOnNoMatch()
+    {
+        $router = new Router($this->buildRouteCollection(), 'http://example.com');
+
+        $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
+        $this->assertInstanceOf(UnsuccessfulMatch::class, $matchResult);
     }
 
     public function testExceptionOnUnexpectedSuccessfulMatchResult()
     {
-        $matchResult = $this->getMock(MatchResultInterface::class);
-        $matchResult
-            ->expects($this->once())
-            ->method('isSuccess')
-            ->will($this->returnValue(true));
+        $expectedMatchResult = $this->prophesize(MatchResultInterface::class);
+        $expectedMatchResult->isSuccess()->willReturn(true);
 
-        $routeCollection    = new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-        $router             = new Router($routeCollection, new Uri('http://example.com/foo'));
-        $request            = $this->getHttpRequest();
+        $successfulRoute = $this->prophesize(RouteInterface::class);
+        $successfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn(
+            $expectedMatchResult->reveal()
+        );
 
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('match')
-            ->with($this->equalTo($request))
-            ->will($this->returnValue($matchResult));
-
-        $routeCollection->insert('foo', $route);
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $successfulRoute->reveal(),
+        ]), 'http://example.com');
 
         $this->setExpectedException(
             UnexpectedValueException::class,
             'Expected instance of Dash\MatchResult\SuccessfulMatch, received'
         );
-        $router->match($request);
+        $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
+    }
+
+    public function testPathOffsetIsPassed()
+    {
+        $route = $this->prophesize(RouteInterface::class);
+        $route->match(Argument::type(ServerRequestInterface::class), 4);
+
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
+
+        $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
     }
 
     public function testAssembleFailsWithoutRouteName()
     {
-        $routeCollection = $this->getMock(RouteCollectionInterface::class);
-        $router          = new Router($routeCollection, new Uri('http://example.com/foo'));
+        $router = new Router($this->buildRouteCollection(), 'http://example.com/foo');
 
         $this->setExpectedException(RuntimeException::class, 'No route name was supplied');
         $router->assemble([], []);
@@ -130,122 +176,83 @@ class RouterTest extends TestCase
 
     public function testAssemblePassesDownChildName()
     {
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->with($this->anything(), $this->equalTo('bar'))
-            ->will($this->returnValue(new AssemblyResult()));
+        $route = $this->prophesize(RouteInterface::class);
+        $route->assemble([], 'bar')->willReturn(new AssemblyResult());
 
-        $router = $this->getAssemblyRouter($route);
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
+
         $router->assemble([], ['name' => 'foo/bar']);
     }
 
     public function testAssemblePassesNullWithoutFurtherChildren()
     {
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->with($this->anything(), $this->equalTo(null))
-            ->will($this->returnValue(new AssemblyResult()));
+        $route = $this->prophesize(RouteInterface::class);
+        $route->assemble([], null)->willReturn(new AssemblyResult());
 
-        $router = $this->getAssemblyRouter($route);
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
+
         $router->assemble([], ['name' => 'foo']);
-    }
-
-    public function testAssembleIgnoresTrailingSlash()
-    {
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->with($this->anything(), $this->equalTo(null))
-            ->will($this->returnValue(new AssemblyResult()));
-
-        $router = $this->getAssemblyRouter($route);
-        $router->assemble([], ['name' => 'foo/']);
-    }
-
-    public function testAssembleReturnsRelativeUriWithoutModifications()
-    {
-        $route  = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->will($this->returnValue(new AssemblyResult()));
-        $router = $this->getAssemblyRouter($route);
-
-        $this->assertEquals('/foo', $router->assemble([], ['name' => 'foo']));
-    }
-
-    public function testAssembleReturnsCanonicalUriWithModifications()
-    {
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->will($this->returnCallback(function () {
-                $assemblyResult = new AssemblyResult();
-                $assemblyResult->host = 'example.org';
-                return $assemblyResult;
-            }));
-
-        $router = $this->getAssemblyRouter($route);
-
-        $this->assertEquals('//example.org/foo', $router->assemble([], ['name' => 'foo']));
     }
 
     public function testAssembleReturnsCanonicalUriWhenForced()
     {
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->will($this->returnValue(new AssemblyResult()));
-        $router = $this->getAssemblyRouter($route);
+        $route = $this->prophesize(RouteInterface::class);
+        $route->assemble([], null)->willReturn(new AssemblyResult());
 
-        $this->assertEquals('http://example.com/foo', $router->assemble([], ['name' => 'foo', 'force_canonical' => true]));
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
+
+        $this->assertEquals('http://example.com/foo', $router->assemble([], [
+            'name' => 'foo', 'force_canonical' => true
+        ]));
     }
 
     public function testAssembleQuery()
     {
-        $route = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->will($this->returnValue(new AssemblyResult()));
-        $router = $this->getAssemblyRouter($route);
+        $route = $this->prophesize(RouteInterface::class);
+        $route->assemble([], null)->willReturn(new AssemblyResult());
+
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
 
         $this->assertEquals('/foo?foo=bar', $router->assemble([], ['name' => 'foo', 'query' => ['foo' => 'bar']]));
     }
 
     public function testAssembleFragment()
     {
-        $route  = $this->getMock(RouteInterface::class);
-        $route
-            ->expects($this->once())
-            ->method('assemble')
-            ->will($this->returnValue(new AssemblyResult()));
-        $router = $this->getAssemblyRouter($route);
+        $route = $this->prophesize(RouteInterface::class);
+        $route->assemble([], null)->willReturn(new AssemblyResult());
+
+        $router = new Router($this->buildRouteCollection([
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
 
         $this->assertEquals('/foo#foo', $router->assemble([], ['name' => 'foo', 'fragment' => 'foo']));
     }
 
-    protected function getHttpRequest()
+    /**
+     * @param  array $routes
+     * @return RouteCollectionInterface
+     */
+    protected function buildRouteCollection(array $routes = [])
     {
-        return new Request('GET', 'http://example.com/foo/bar');
-    }
+        $children = $this->prophesize(RouteCollectionInterface::class);
+        $children->willImplement(IteratorAggregate::class);
 
-    protected function getAssemblyRouter(RouteInterface $route)
-    {
-        $routeCollection = $this->getMock(RouteCollectionInterface::class);
-        $routeCollection
-            ->expects($this->once())
-            ->method('get')
-            ->with($this->equalTo('foo'))
-            ->will($this->returnValue($route));
+        $children->getIterator()->will(function () use ($routes) {
+            foreach ($routes as $key => $route) {
+                yield $key => $route;
+            }
+        });
 
-        return new Router($routeCollection, new Uri('http://example.com/foo'));
+        $children->get(Argument::any())->will(function ($arguments) use ($routes) { return $routes[$arguments[0]]; });
+
+        return $children->reveal();
     }
 }
