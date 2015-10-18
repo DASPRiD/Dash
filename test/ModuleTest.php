@@ -40,6 +40,15 @@ class ModuleTest extends TestCase
         $this->assertArrayHasKey(RouteManager::class, $config['service_manager']['factories']);
         $this->assertImplements(FactoryInterface::class, $config['service_manager']['factories'][RouteManager::class]);
 
+        $this->assertArrayHasKey('DashBaseUri', $config['service_manager']['factories']);
+        $this->assertImplements(FactoryInterface::class, $config['service_manager']['factories']['DashBaseUri']);
+
+        $this->assertArrayHasKey('DashRootRouteCollection', $config['service_manager']['factories']);
+        $this->assertImplements(
+            FactoryInterface::class,
+            $config['service_manager']['factories']['DashRootRouteCollection']
+        );
+
         $this->assertSame($config, unserialize(serialize($config)));
     }
 
