@@ -203,7 +203,7 @@ class Generic implements RouteInterface
                 if ($methodNotAllowedResult === null) {
                     $methodNotAllowedResult = $childMatch;
                 } else {
-                    $methodNotAllowedResult->merge($childMatch);
+                    $methodNotAllowedResult = $methodNotAllowedResult::merge($methodNotAllowedResult, $childMatch);
                 }
                 continue;
             }
