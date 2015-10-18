@@ -48,17 +48,17 @@ class GenericFactory implements FactoryInterface
         $parserManager = $container->get(ParserManager::class);
 
         if (isset($options['path_parser'])) {
-            $pathParser = $parserManager->get($options['path_parser'], $options);
+            $pathParser = $parserManager->build($options['path_parser'], $options);
         } elseif (isset($options['path'])) {
-            $pathParser = $parserManager->get('PathSegment', $options);
+            $pathParser = $parserManager->build('PathSegment', $options);
         } else {
             $pathParser = null;
         }
 
         if (isset($options['hostname_parser'])) {
-            $hostnameParser = $parserManager->get($options['hostname_parser'], $options);
+            $hostnameParser = $parserManager->build($options['hostname_parser'], $options);
         } elseif (isset($options['hostname'])) {
-            $hostnameParser = $parserManager->get('HostnameSegment', $options);
+            $hostnameParser = $parserManager->build('HostnameSegment', $options);
         } else {
             $hostnameParser = null;
         }

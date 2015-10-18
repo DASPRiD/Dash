@@ -123,17 +123,17 @@ class GenericFactoryTest extends TestCase
         ParserInterface $hostnameParser = null
     ) {
         $parserManager = $this->prophesize(ParserManager::class);
-        $parserManager->get('PathSegment', Argument::withEntry('path', $pathPattern))
+        $parserManager->build('PathSegment', Argument::withEntry('path', $pathPattern))
             ->willReturn($this->prophesize(ParserInterface::class)->reveal());
-        $parserManager->get('HostnameSegment', Argument::withEntry('hostname', $hostnamePattern))
+        $parserManager->build('HostnameSegment', Argument::withEntry('hostname', $hostnamePattern))
             ->willReturn($this->prophesize(ParserInterface::class)->reveal());
 
         if (null !== $pathParser) {
-            $parserManager->get('CustomPath', Argument::type('array'))->willReturn($pathParser);
+            $parserManager->build('CustomPath', Argument::type('array'))->willReturn($pathParser);
         }
 
         if (null !== $hostnameParser) {
-            $parserManager->get('CustomHostname', Argument::type('array'))->willReturn($hostnameParser);
+            $parserManager->build('CustomHostname', Argument::type('array'))->willReturn($hostnameParser);
         }
 
         $container = $this->prophesize(ContainerInterface::class);

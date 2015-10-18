@@ -10,8 +10,8 @@
 namespace Dash\RouteCollection;
 
 use Dash\Exception;
-use Dash\Route\RouteManager;
 use IteratorAggregate;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Lazy route collection which only instantiates routes when required.
@@ -19,7 +19,7 @@ use IteratorAggregate;
 class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
 {
     /**
-     * @var RouteManager
+     * @var ServiceLocatorInterface
      */
     protected $routeManager;
 
@@ -29,10 +29,10 @@ class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
     protected $routes = [];
 
     /**
-     * @param RouteManager $routeManager
-     * @param array[]      $routes
+     * @param ServiceLocatorInterface $routeManager
+     * @param array[]                 $routes
      */
-    public function __construct(RouteManager $routeManager, array $routes)
+    public function __construct(ServiceLocatorInterface $routeManager, array $routes)
     {
         $this->routeManager = $routeManager;
         $serial = 0;
@@ -69,7 +69,7 @@ class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
         $route = &$this->routes[$name];
 
         if (null === $route['instance']) {
-            $route['instance'] = $this->routeManager->get(
+            $route['instance'] = $this->routeManager->build(
                 !isset($route['options']['type']) ? 'Generic' : $route['options']['type'],
                 $route['options']
             );
@@ -85,7 +85,7 @@ class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
     {
         foreach ($this->routes as $name => &$route) {
             if (null === $route['instance']) {
-                $route['instance'] = $this->routeManager->get(
+                $route['instance'] = $this->routeManager->build(
                     !isset($route['options']['type']) ? 'Generic' : $route['options']['type'],
                     $route['options']
                 );

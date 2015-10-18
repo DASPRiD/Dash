@@ -57,7 +57,7 @@ class LazyRouteCollectionTest extends TestCase
     public function testInsertWithArray()
     {
         $routeManager = $this->prophesize(RouteManager::class);
-        $routeManager->get('bar', ['type' => 'bar'])->willReturn($this->route);
+        $routeManager->build('bar', ['type' => 'bar'])->willReturn($this->route);
 
         $collection = new LazyRouteCollection($routeManager->reveal(), [
             'foo' => ['type' => 'bar'],
@@ -69,7 +69,7 @@ class LazyRouteCollectionTest extends TestCase
     public function testInsertWithArrayWithoutType()
     {
         $routeManager = $this->prophesize(RouteManager::class);
-        $routeManager->get('Generic', [])->willReturn($this->route);
+        $routeManager->build('Generic', [])->willReturn($this->route);
 
         $collection = new LazyRouteCollection($routeManager->reveal(), [
             'foo' => [],
@@ -106,7 +106,7 @@ class LazyRouteCollectionTest extends TestCase
     public function testSort(array $routes, array $expectedOrder)
     {
         $routeManager = $this->prophesize(RouteManager::class);
-        $routeManager->get('Generic', Argument::type('array'))->willReturn($this->route);
+        $routeManager->build('Generic', Argument::type('array'))->willReturn($this->route);
 
         $collection = new LazyRouteCollection($routeManager->reveal(), $routes);
 
