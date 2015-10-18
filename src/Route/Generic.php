@@ -150,19 +150,19 @@ class Generic implements RouteInterface
         }
 
         // Looks good so far, let's create a match.
-        $match = new SuccessfulMatch($this->defaults);
+        $params = $this->defaults;
 
         if (isset($hostnameResult)) {
-            $match->addParseResult($hostnameResult);
+            $params = $hostnameResult->getParams() + $params;
         }
 
         if (isset($pathResult)) {
-            $match->addParseResult($pathResult);
+            $params = $pathResult->getParams() + $params;
         }
 
         if ($completePathMatched) {
             if (null === $this->methods || isset($this->methods[$request->getMethod()])) {
-                return $match;
+                return new SuccessfulMatch($params);
             }
 
             if (!$this->methods) {
@@ -196,9 +196,7 @@ class Generic implements RouteInterface
                     ));
                 }
 
-                $childMatch->prependRouteName($childName);
-                $match->merge($childMatch);
-                return $match;
+                return SuccessfulMatch::fromChildMatch($childMatch, $params, $childName);
             }
 
             if ($childMatch instanceof MethodNotAllowed) {

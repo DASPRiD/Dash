@@ -10,7 +10,6 @@
 namespace DashTest\MatchResult;
 
 use Dash\MatchResult\SuccessfulMatch;
-use Dash\Parser\ParseResult;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -23,55 +22,47 @@ class SuccessfulMatchTest extends TestCase
         $this->assertEquals(['foo' => 'bar'], (new SuccessfulMatch(['foo' => 'bar']))->getParams());
     }
 
-    public function testSetParam()
-    {
-        $result = new SuccessfulMatch();
-        $result->setParam('foo', 'bar');
-        $this->assertEquals('bar', $result->getParam('foo'));
-    }
-
     public function testGetParamDefault()
     {
-        $this->assertNull((new SuccessfulMatch())->getParam('foo'));
-        $this->assertEquals('bar', (new SuccessfulMatch())->getParam('foo', 'bar'));
+        $this->assertNull((new SuccessfulMatch([]))->getParam('foo'));
+        $this->assertSame('bar', (new SuccessfulMatch([]))->getParam('foo', 'bar'));
+    }
+
+    public function testGetParam()
+    {
+        $this->assertSame('bar', (new SuccessfulMatch(['foo' => 'bar']))->getParam('foo'));
     }
 
     public function testIsSuccess()
     {
-        $this->assertTrue((new SuccessfulMatch())->isSuccess());
+        $this->assertTrue((new SuccessfulMatch([]))->isSuccess());
     }
 
-    public function testRouteNamePrepending()
+    public function testFromChildMatchParamMerge()
     {
-        $result = new SuccessfulMatch();
-        $this->assertNull($result->getRouteName());
+        $childMatch = new SuccessfulMatch(['foo' => 'bar', 'baz' => 'bat']);
+        $match = SuccessfulMatch::fromChildMatch($childMatch, ['foo' => 'bat', 'bar' => 'bar'], '');
 
-        $result->prependRouteName('foo');
-        $this->assertEquals('foo', $result->getRouteName());
-
-        $result->prependRouteName('bar');
-        $this->assertEquals('bar/foo', $result->getRouteName());
+        $this->assertSame([
+            'foo' => 'bar',
+            'baz' => 'bat',
+            'bar' => 'bar',
+        ], $match->getParams());
     }
 
-    public function testAddParseResult()
+    public function testFromChildMatchWithoutRouteName()
     {
-        $result = new SuccessfulMatch(['foo' => 'bar']);
-        $result->addParseResult(new ParseResult(['foo' => 'baz', 'bat' => 'bar'], 0));
-        $this->assertEquals(['foo' => 'baz', 'bat' => 'bar'], $result->getParams());
+        $childMatch = new SuccessfulMatch([]);
+        $match = SuccessfulMatch::fromChildMatch($childMatch, [], 'foo');
+
+        $this->assertSame('foo', $match->getRouteName());
     }
 
-    public function testMerge()
+    public function testFromChildMatchWithRouteName()
     {
-        $result = new SuccessfulMatch(['foo' => 'bar']);
-        $result->prependRouteName('foo');
+        $childMatch = SuccessfulMatch::fromChildMatch(new SuccessfulMatch([]), [], 'bar');
+        $match = SuccessfulMatch::fromChildMatch($childMatch, [], 'foo');
 
-        $result->merge(new SuccessfulMatch(['foo' => 'baz', 'bat' => 'bar']));
-        $this->assertEquals(['foo' => 'baz', 'bat' => 'bar'], $result->getParams());
-        $this->assertEquals('foo', $result->getRouteName());
-
-        $otherMatch = new SuccessfulMatch();
-        $otherMatch->prependRouteName('bar');
-        $result->merge($otherMatch);
-        $this->assertEquals('bar/foo', $result->getRouteName());
+        $this->assertSame('foo/bar', $match->getRouteName());
     }
 }

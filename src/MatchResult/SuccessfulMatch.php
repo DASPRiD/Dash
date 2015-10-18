@@ -9,8 +9,6 @@
 
 namespace Dash\MatchResult;
 
-use Dash\Parser\ParseResult;
-
 /**
  * Generic successful match result.
  */
@@ -22,29 +20,37 @@ class SuccessfulMatch implements MatchResultInterface
     protected $params;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     protected $routeName;
 
     /**
      * Creates a new successful match result.
      *
-     * @param array $params
+     * @param array       $params
+     * @param string|null $routeName
      */
-    public function __construct(array $params = [])
+    public function __construct(array $params)
     {
         $this->params = $params;
     }
 
     /**
-     * Sets a single parameter.
-     *
-     * @param string $name
-     * @param mixed  $value
+     * @param self   $childMatch
+     * @param array  $params
+     * @param string $childName
      */
-    public function setParam($name, $value)
+    public static function fromChildMatch(self $childMatch, array $params, $childName)
     {
-        $this->params[$name] = $value;
+        $match = new static($childMatch->getParams());
+        $match->params += $params;
+        $match->routeName = $childName;
+
+        if (null !== $childMatch->getRouteName()) {
+            $match->routeName .= '/' . $childMatch->getRouteName();
+        }
+
+        return $match;
     }
 
     /**
@@ -74,49 +80,13 @@ class SuccessfulMatch implements MatchResultInterface
     }
 
     /**
-     * @param string $routeName
-     */
-    public function prependRouteName($routeName)
-    {
-        if ($this->routeName === null) {
-            $this->routeName = $routeName;
-        } else {
-            $this->routeName = $routeName . '/' . $this->routeName;
-        }
-    }
-
-    /**
      * Gets the name of the matched route.
      *
-     * @return string
+     * @return string|null
      */
     public function getRouteName()
     {
         return $this->routeName;
-    }
-
-    /**
-     * Adds the parameters of a parse result to the match.
-     *
-     * @param ParseResult $parseResult
-     */
-    public function addParseResult(ParseResult $parseResult)
-    {
-        $this->params = $parseResult->getParams() + $this->params;
-    }
-
-    /**
-     * Merges another match with this one.
-     *
-     * @param self $match
-     */
-    public function merge(self $match)
-    {
-        $this->params = $match->getParams() + $this->params;
-
-        if ($match->getRouteName() !== null) {
-            $this->prependRouteName($match->getRouteName());
-        }
     }
 
     /**

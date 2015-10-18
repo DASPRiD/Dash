@@ -92,7 +92,7 @@ class RouterTest extends TestCase
 
     public function testSuccessfulMatchResultIsReturned()
     {
-        $expectedMatchResult = new SuccessfulMatch();
+        $expectedMatchResult = new SuccessfulMatch([]);
 
         $successfulRoute = $this->prophesize(RouteInterface::class);
         $successfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn($expectedMatchResult);
@@ -106,7 +106,8 @@ class RouterTest extends TestCase
         ]), 'http://example.com');
 
         $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
-        $this->assertSame($expectedMatchResult, $matchResult);
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertSame('bar', $matchResult->getRouteName());
         $this->assertSame('bar', $matchResult->getRouteName());
     }
 

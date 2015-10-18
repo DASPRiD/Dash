@@ -89,7 +89,7 @@ class Router implements RouterInterface
                     ));
                 }
 
-                $matchResult->prependRouteName($name);
+                $matchResult = SuccessfulMatch::fromChildMatch($matchResult, [], $name);
             }
 
             return $matchResult;
