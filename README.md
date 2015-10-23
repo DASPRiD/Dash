@@ -18,6 +18,7 @@
 --------------------------------------------------------------------------------
 
 [![Build Status](https://api.travis-ci.org/DASPRiD/Dash.png?branch=master)](http://travis-ci.org/DASPRiD/Dash)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/DASPRiD/Dash/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/DASPRiD/Dash/?branch=master)
 [![Coverage Status](https://coveralls.io/repos/DASPRiD/Dash/badge.png?branch=master)](https://coveralls.io/r/DASPRiD/Dash)
 
 This package is the router prototype for Zend Framework 3. It is not feature complete yet, but is complete enough to
