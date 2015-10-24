@@ -95,7 +95,7 @@ class Generic implements RouteInterface
         if (null !== $methods) {
             $this->methods = array_flip(array_map('strtoupper', array_values($methods)));
 
-            if (isset($this->methods['GET']) xor isset($this->methods['HEAD'])) {
+            if (isset($this->methods['GET']) ^ isset($this->methods['HEAD'])) {
                 // Implicitly enable HEAD on GET, and vise versa.
                 $this->methods['GET']  = true;
                 $this->methods['HEAD'] = true;
@@ -165,7 +165,7 @@ class Generic implements RouteInterface
                 return new SuccessfulMatch($params);
             }
 
-            if (!$this->methods) {
+            if (empty($this->methods)) {
                 // Special case: when no methods are defined at all, this route may simply not terminate.
                 return null;
             }
@@ -180,7 +180,6 @@ class Generic implements RouteInterface
 
         $methodNotAllowedResult = null;
         $schemeNotAllowedResult = null;
-        $childMatch             = null;
 
         foreach ($this->children as $childName => $childRoute) {
             if (null === ($childMatch = $childRoute->match($request, $pathOffset))) {

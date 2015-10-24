@@ -169,10 +169,10 @@ class Segment implements ParserInterface
 
                 $currentPos += strlen($matches[0]);
             } elseif ($matches['token'] === '[') {
-                $tokens[] = array('optional-start');
+                $tokens[] = ['optional-start'];
                 $level++;
             } elseif ($matches['token'] === ']') {
-                $tokens[] = array('optional-end');
+                $tokens[] = ['optional-end'];
                 $level--;
 
                 if ($level < 0) {
@@ -220,7 +220,8 @@ class Segment implements ParserInterface
                         $regex .= '(' . $groupName . '[^' . $token[static::DELIMITERS] . ']+)';
                     }
 
-                    $this->paramMap['param' . $groupIndex++] = $token[static::NAME];
+                    $this->paramMap['param' . $groupIndex] = $token[static::NAME];
+                    ++$groupIndex;
                     break;
 
                 case 'optional-start':

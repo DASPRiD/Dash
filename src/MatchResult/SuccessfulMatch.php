@@ -27,8 +27,7 @@ class SuccessfulMatch implements MatchResultInterface
     /**
      * Creates a new successful match result.
      *
-     * @param array       $params
-     * @param string|null $routeName
+     * @param array $params
      */
     public function __construct(array $params)
     {
@@ -81,6 +80,9 @@ class SuccessfulMatch implements MatchResultInterface
 
     /**
      * Gets the name of the matched route.
+     *
+     * This method may return null during construction in the router, but must always return a value after being
+     * returned by a router's match() method.
      *
      * @return string|null
      */
