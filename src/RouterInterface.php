@@ -9,7 +9,8 @@
 
 namespace Dash;
 
-use Psr\Http\Message\RequestInterface;
+use Dash\MatchResult\MatchResultInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Interface every router must implement.
@@ -19,17 +20,17 @@ interface RouterInterface
     /**
      * Matches a given request.
      *
-     * @param  RequestInterface $request
-     * @return MatchResult\MatchResultInterface
+     * @param  ServerRequestInterface $request
+     * @return MatchResultInterface
      */
-    public function match(RequestInterface $request);
+    public function match(ServerRequestInterface $request);
 
     /**
      * Assembles a response.
      *
      * @param  array $params
      * @param  array $options
-     * @return mixed
+     * @return string
      */
     public function assemble(array $params, array $options);
 }

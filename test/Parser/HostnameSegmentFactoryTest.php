@@ -10,6 +10,7 @@
 namespace DashTest\Parser;
 
 use Dash\Parser\HostnameSegmentFactory;
+use Dash\Parser\Segment;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
@@ -21,18 +22,19 @@ class HostnameSegmentFactoryTest extends TestCase
     public function testFactoryWithoutConfiguration()
     {
         $factory = new HostnameSegmentFactory();
-        $parser  = $factory($this->getMock(ContainerInterface::class), '');
+        $parser  = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
 
-        $parseResult = $parser->parse('', 0);
-        $this->assertEquals([], $parseResult->getParams());
-        $this->assertEquals(0, $parseResult->getMatchLength());
+        $this->assertInstanceOf(Segment::class, $parser);
+        $this->assertAttributeSame('.', 'delimiter', $parser);
+        $this->assertAttributeSame('', 'pattern', $parser);
+        $this->assertAttributeSame([], 'constraints', $parser);
     }
 
     public function testFactoryWithConfiguration()
     {
         $factory = new HostnameSegmentFactory();
         $parser = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':foo.example.com',
@@ -40,17 +42,17 @@ class HostnameSegmentFactoryTest extends TestCase
             ]
         );
 
-        $this->assertNull($parser->parse('0.example.com', 0));
-        $parseResult = $parser->parse('1.example.com', 0);
-        $this->assertEquals(['foo' => '1'], $parseResult->getParams());
-        $this->assertEquals(13, $parseResult->getMatchLength());
+        $this->assertInstanceOf(Segment::class, $parser);
+        $this->assertAttributeSame('.', 'delimiter', $parser);
+        $this->assertAttributeSame(':foo.example.com', 'pattern', $parser);
+        $this->assertAttributeSame(['foo' => '1'], 'constraints', $parser);
     }
 
     public function testFactoryReusesInstancesWithSameConfiguration()
     {
         $factory = new HostnameSegmentFactory();
         $parser1 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':foo.example.com',
@@ -58,7 +60,7 @@ class HostnameSegmentFactoryTest extends TestCase
             ]
         );
         $parser2 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':foo.example.com',
@@ -66,7 +68,7 @@ class HostnameSegmentFactoryTest extends TestCase
             ]
         );
         $parser3 = $factory(
-            $this->getMock(ContainerInterface::class),
+            $this->prophesize(ContainerInterface::class)->reveal(),
             '',
             [
                 'hostname'    => ':bar.example.com',

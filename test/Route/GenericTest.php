@@ -9,7 +9,6 @@
 
 namespace DashTest\Route;
 
-use Dash\Exception\InvalidArgumentException;
 use Dash\Exception\RuntimeException;
 use Dash\Exception\UnexpectedValueException;
 use Dash\MatchResult\MatchResultInterface;
@@ -18,339 +17,282 @@ use Dash\MatchResult\SchemeNotAllowed;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Parser\ParseResult;
 use Dash\Parser\ParserInterface;
+use Dash\Route\AssemblyResult;
 use Dash\Route\Generic;
 use Dash\Route\RouteInterface;
-use Dash\RouteCollection\RouteCollection;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Dash\RouteCollection\RouteCollectionInterface;
+use IteratorAggregate;
 use PHPUnit_Framework_TestCase as TestCase;
-use Psr\Http\Message\RequestInterface;
+use Prophecy\Argument;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * @covers Dash\Route\Generic
  */
 class GenericTest extends TestCase
 {
-    /**
-     * @var Generic
-     */
-    protected $route;
-
-    /**
-     * @var RequestInterface
-     */
-    protected $request;
-
-    public function setUp()
-    {
-        $this->route = new Generic();
-
-        $secureUri = $this->getMock(UriInterface::class);
-
-        $secureUri
-            ->expects($this->any())
-            ->method('__toString')
-            ->will($this->returnValue('https://example.com/foo/bar'));
-
-        $uri = $this->getMock(UriInterface::class);
-
-        $uri
-            ->expects($this->any())
-            ->method('getScheme')
-            ->will($this->returnValue('http'));
-
-        $uri
-            ->expects($this->any())
-            ->method('getHost')
-            ->will($this->returnValue('example.com'));
-
-        $uri
-            ->expects($this->any())
-            ->method('getPath')
-            ->will($this->returnValue('/foo/bar'));
-
-        $uri
-            ->expects($this->any())
-            ->method('withScheme')
-            ->will($this->returnValue($secureUri));
-
-        $this->request = $this->getMock(RequestInterface::class);
-
-        $this->request
-            ->expects($this->any())
-            ->method('getMethod')
-            ->will($this->returnValue('GET'));
-
-        $this->request
-            ->expects($this->any())
-            ->method('getUri')
-            ->will($this->returnValue($uri));
-    }
-
     public function testNoMatchWithoutConfiguration()
     {
-        $this->assertNull($this->route->match($this->request, 0));
+        $this->assertNull($this->buildRoute()->match($this->buildRequest(), 0));
     }
 
     public function testSuccessfulPathMatch()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals(['foo' => 'bar'], $match->getParams());
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
     public function testFailedPathMatch()
     {
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->once())
-            ->method('parse')
-            ->with($this->equalTo('/foo/bar'), $this->equalTo(4))
-            ->will($this->returnValue(null));
+        $pathParser = $this->prophesize(ParserInterface::class);
+        $pathParser->parse('/foo/bar', 4)->willReturn(null);
 
-        $this->route->setPathParser($pathParser);
-        $this->assertNull($this->route->match($this->request, 4));
+        $matchResult = $this->buildRoute([
+            'path_parser' => $pathParser->reveal(),
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertNull($matchResult);
     }
 
     public function testIncompletePathMatch()
     {
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $this->assertNull($this->route->match($this->request, 4));
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertNull($matchResult);
     }
 
     public function testSuccessfulHostnameMatch()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $this->route->setHostnameParser($this->getSuccessfullHostnameParser());
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'hostname_parser' => $this->getSuccessfullHostnameParser(),
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getParams());
     }
 
     public function testFailedHostnameMatch()
     {
-        $hostnameParser = $this->getMock(ParserInterface::class);
-        $hostnameParser
-            ->expects($this->once())
-            ->method('parse')
-            ->with($this->equalTo('example.com'), $this->equalTo(0))
-            ->will($this->returnValue(null));
+        $hostnameParser = $this->prophesize(ParserInterface::class);
+        $hostnameParser->parse('example.com', 0)->willReturn(null);
 
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->never())
-            ->method('parse');
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'hostname_parser' => $hostnameParser->reveal(),
+        ])->match($this->buildRequest(), 4);
 
-        $this->route->setPathParser($pathParser);
-        $this->route->setHostnameParser($hostnameParser);
-        $this->assertNull($this->route->match($this->request, 4));
+        $this->assertNull($matchResult);
     }
 
     public function testIncompleteHostnameMatch()
     {
-        $hostnameParser = $this->getMock(ParserInterface::class);
-        $hostnameParser
-            ->expects($this->once())
-            ->method('parse')
-            ->with($this->equalTo('example.com'), $this->equalTo(0))
-            ->will($this->returnValue(new ParseResult(['baz' => 'bat'], 7)));
+        $hostnameParser = $this->prophesize(ParserInterface::class);
+        $hostnameParser->parse('example.com', 0)->willReturn(new ParseResult(['baz' => 'bat'], 7));
 
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->never())
-            ->method('parse');
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'hostname_parser' => $hostnameParser->reveal(),
+        ])->match($this->buildRequest(), 4);
 
-        $this->route->setPathParser($pathParser);
-        $this->route->setHostnameParser($hostnameParser);
-        $this->assertNull($this->route->match($this->request, 4));
+        $this->assertNull($matchResult);
     }
 
     public function testFailedPortMatch()
     {
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->never())
-            ->method('parse');
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'port' => 500,
+        ])->match($this->buildRequest(), 4);
 
-        $this->route->setPathParser($pathParser);
-        $this->route->setPort(500);
-        $this->assertNull($this->route->match($this->request, 4));
+        $this->assertNull($matchResult);
     }
 
     public function testSuccessfulPortMatch()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $this->route->setPort(80);
-        $this->assertNotNull($this->route->match($this->request, 4));
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'port' => 80,
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
     public function testEarlyReturnOnNonSecureScheme()
     {
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->never())
-            ->method('parse');
+        $pathParser = $this->prophesize(ParserInterface::class);
+        $pathParser->parse()->shouldNotBeCalled();
 
-        $this->route->setPathParser($pathParser);
-        $this->route->setSecure(true);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $pathParser->reveal(),
+            'secure' => true,
+        ])->match($this->buildRequest(), 0);
 
-        $result = $this->route->match($this->request, 0);
-        $this->assertInstanceOf(SchemeNotAllowed::class, $result);
-        $this->assertEquals('https://example.com/foo/bar', $result->getAllowedUri());
+        $this->assertInstanceOf(SchemeNotAllowed::class, $matchResult);
+        $this->assertEquals('https://example.com/foo/bar', $matchResult->getAllowedUri());
+    }
+
+    public function testSwitchToNonSecureScheme()
+    {
+        $matchResult = $this->buildRoute([
+            'secure' => false,
+        ])->match($this->buildRequest(true), 0);
+
+        $this->assertInstanceOf(SchemeNotAllowed::class, $matchResult);
+        $this->assertEquals('http://example.com/foo/bar', $matchResult->getAllowedUri());
     }
 
     public function testNoMatchWithEmptyMethod()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $this->route->setMethods('');
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'methods' => [],
+        ])->match($this->buildRequest(), 4);
 
-        $result = $this->route->match($this->request, 4);
-        $this->assertNull($result);
+        $this->assertNull($matchResult);
     }
 
     public function testMethodNotAllowedResultWithWrongMethod()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $this->route->setMethods('post');
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'methods' => ['post'],
+        ])->match($this->buildRequest(), 4);
 
-        $result = $this->route->match($this->request, 4);
-        $this->assertInstanceOf(MethodNotAllowed::class, $result);
-        $this->assertEquals(['POST'], $result->getAllowedMethods());
+        $this->assertInstanceOf(MethodNotAllowed::class, $matchResult);
+        $this->assertEquals(['POST'], $matchResult->getAllowedMethods());
     }
 
     public function testMatchWithWildcardMethod()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $this->route->setMethods('*');
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'methods' => null,
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals(['foo' => 'bar'], $match->getParams());
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
     public function testMatchWithMultipleMethods()
     {
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $this->route->setMethods(['get', 'post']);
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'methods' => ['get', 'post'],
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals(['foo' => 'bar'], $match->getParams());
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
     public function testMatchOverridesDefaults()
     {
-        $this->route->setDefaults(['foo' => 'bat', 'baz' =>'bat']);
-        $this->route->setPathParser($this->getSuccessfullPathParser());
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getSuccessfullPathParser(),
+            'defaults' => ['foo' => 'bat', 'baz' =>'bat'],
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
-    }
-
-    public function testSetMethodWithInvalidScalar()
-    {
-        $this->setExpectedException(
-            InvalidArgumentException::class,
-            '$methods must either be a string or an array'
-        );
-
-        $this->route->setMethods(1);
-    }
-
-    public function testSetInvalidMethod()
-    {
-        $this->setExpectedException(
-            InvalidArgumentException::class,
-            'FOO is not a valid HTTP method'
-        );
-
-        $this->route->setMethods('foo');
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getParams());
     }
 
     public function testIncompletePathMatchWithoutChildMatch()
     {
-        $this->route->setChildren($this->getRouteCollection());
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $this->assertNull($this->route->match($this->request, 4));
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren(),
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertNull($matchResult);
     }
 
     public function testIncompletePathMatchWithChildMatch()
     {
-        $this->assignChildren([new SuccessfulMatch(['baz' => 'bat'])]);
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren([
+                new SuccessfulMatch(['baz' => 'bat']),
+            ]),
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $match->getParams());
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getParams());
     }
 
     public function testUnknownMatchResultTakesPrecedence()
     {
-        $expectedMatchResult = $this->getMock(MatchResultInterface::class);
-        $this->assignChildren([
-            'no-call',
-            $expectedMatchResult,
-            $this->getMock(MethodNotAllowed::class, [], [], '', false),
-            $this->getMock(SchemeNotAllowed::class, [], [], '', false),
-            null
-        ]);
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $match = $this->route->match($this->request, 4);
+        $expectedMatchResult = $this->prophesize(MatchResultInterface::class)->reveal();
 
-        $this->assertSame($expectedMatchResult, $match);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren([
+                null,
+                $this->prophesize(SchemeNotAllowed::class)->reveal(),
+                $this->prophesize(MethodNotAllowed::class)->reveal(),
+                $expectedMatchResult,
+                'no-call',
+            ]),
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertSame($expectedMatchResult, $matchResult);
     }
 
     public function testFirstSchemeNotAllowedResultIsReturned()
     {
-        $expectedMatchResult = $this->getMock(SchemeNotAllowed::class, [], [], '', false);
-        $this->assignChildren([
-            $this->getMock(SchemeNotAllowed::class, [], [], '', false),
-            $expectedMatchResult,
-        ]);
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $match = $this->route->match($this->request, 4);
+        $expectedMatchResult = $this->prophesize(SchemeNotAllowed::class)->reveal();
 
-        $this->assertSame($expectedMatchResult, $match);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren([
+                $expectedMatchResult,
+                $this->prophesize(SchemeNotAllowed::class)->reveal(),
+            ]),
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertSame($expectedMatchResult, $matchResult);
     }
 
     public function testSchemeNotAllowedResultTakesPrecedence()
     {
-        $expectedMatchResult = $this->getMock(SchemeNotAllowed::class, [], [], '', false);
-        $this->assignChildren([
-            $this->getMock(MethodNotAllowed::class, [], [], '', false),
-            $expectedMatchResult,
-        ]);
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $match = $this->route->match($this->request, 4);
+        $expectedMatchResult = $this->prophesize(SchemeNotAllowed::class)->reveal();
 
-        $this->assertSame($expectedMatchResult, $match);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren([
+                $expectedMatchResult,
+                $this->prophesize(MethodNotAllowed::class)->reveal()
+            ]),
+        ])->match($this->buildRequest(), 4);
+
+        $this->assertSame($expectedMatchResult, $matchResult);
     }
 
     public function testMethodNotAllowedResultsAreMerged()
     {
-        $this->assignChildren([new MethodNotAllowed(['GET']), new MethodNotAllowed(['POST'])]);
-        $this->route->setPathParser($this->getIncompletePathParser());
-        $match = $this->route->match($this->request, 4);
+        $matchResult = $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren([
+                new MethodNotAllowed(['GET']),
+                new MethodNotAllowed(['POST']),
+            ]),
+        ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(MethodNotAllowed::class, $match);
-        $this->assertEquals(['POST', 'GET'], $match->getAllowedMethods());
+        $this->assertInstanceOf(MethodNotAllowed::class, $matchResult);
+        $this->assertEquals(['GET', 'POST'], $matchResult->getAllowedMethods());
     }
 
     public function testExceptionOnUnexpectedSuccessfulMatchResult()
     {
-        $matchResult = $this->getMock(MatchResultInterface::class);
-        $matchResult
-            ->expects($this->once())
-            ->method('isSuccess')
-            ->will($this->returnValue(true));
-
-        $this->assignChildren([$matchResult]);
-        $this->route->setPathParser($this->getIncompletePathParser());
+        $matchResultResult = $this->prophesize(MatchResultInterface::class);
+        $matchResultResult->isSuccess()->willReturn(true);
 
         $this->setExpectedException(
             UnexpectedValueException::class,
@@ -359,186 +301,208 @@ class GenericTest extends TestCase
                 SuccessfulMatch::class
             )
         );
-        $this->route->match($this->request, 4);
+
+        $this->buildRoute([
+            'path_parser' => $this->getIncompletePathParser(),
+            'children' => $this->buildChildren([
+                $matchResultResult->reveal(),
+            ]),
+        ])->match($this->buildRequest(), 4);
     }
 
     public function testAssembleSecureSchema()
     {
-        $this->route->setSecure(true);
-        $assemblyResult = $this->route->assemble([]);
+        $assemblyResult = $this->buildRoute([
+            'secure' => true,
+        ])->assemble([]);
 
-        $this->assertEquals('https://example.com', $assemblyResult->generateUri('http', 'example.com', 80, false));
+        $this->assertAssemblyResult($assemblyResult, ['scheme' => 'https']);
     }
 
     public function testAssembleHostname()
     {
-        $parser = $this->getMock(ParserInterface::class);
-        $parser
-            ->expects($this->once())
-            ->method('compile')
-            ->with($this->equalTo(['foo' => 'bar']), $this->equalTo(['baz' => 'bat']))
-            ->will($this->returnValue('example.org'));
+        $hostnameParser = $this->prophesize(ParserInterface::class);
+        $hostnameParser->compile(['foo' => 'bar'], ['baz' => 'bat'])->willReturn('example.org');
 
-        $this->route->setHostnameParser($parser);
-        $this->route->setDefaults(['baz' => 'bat']);
-        $assemblyResult = $this->route->assemble(['foo' => 'bar']);
+        $assemblyResult = $this->buildRoute([
+            'hostname_parser' => $hostnameParser->reveal(),
+            'defaults' => ['baz' => 'bat'],
+        ])->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('//example.org', $assemblyResult->generateUri('http', 'example.com', 80, false));
+        $this->assertAssemblyResult($assemblyResult, ['host' => 'example.org']);
     }
 
     public function testAssemblePath()
     {
-        $parser = $this->getMock(ParserInterface::class);
-        $parser
-            ->expects($this->once())
-            ->method('compile')
-            ->with($this->equalTo(['foo' => 'bar']), $this->equalTo(['baz' => 'bat']))
-            ->will($this->returnValue('/bar'));
+        $pathParser = $this->prophesize(ParserInterface::class);
+        $pathParser->compile(['foo' => 'bar'], ['baz' => 'bat'])->willReturn('/bar');
 
-        $this->route->setPathParser($parser);
-        $this->route->setDefaults(['baz' => 'bat']);
-        $assemblyResult = $this->route->assemble(['foo' => 'bar']);
+        $assemblyResult = $this->buildRoute([
+            'path_parser' => $pathParser->reveal(),
+            'defaults' => ['baz' => 'bat'],
+        ])->assemble(['foo' => 'bar']);
 
-        $this->assertEquals('/bar', $assemblyResult->generateUri('http', 'example.com', 80, false));
+        $this->assertAssemblyResult($assemblyResult, ['path' => '/bar']);
     }
 
     public function testAssemblePort()
     {
-        $this->route->setPort(400);
-        $assemblyResult = $this->route->assemble([]);
+        $assemblyResult = $this->buildRoute([
+            'port' => 400,
+        ])->assemble([]);
 
-        $this->assertEquals('//example.com:400', $assemblyResult->generateUri('http', 'example.com', 80, false));
+        $this->assertAssemblyResult($assemblyResult, ['port' => 400]);
     }
 
     public function testAssembleFailsWithoutChildren()
     {
         $this->setExpectedException(RuntimeException::class, 'Route has no children to assemble');
-        $this->route->assemble([], 'foo');
+        $this->buildRoute()->assemble([], 'foo');
     }
 
     public function testAssemblePassesDownChildName()
     {
-        $child = $this->getMock(RouteInterface::class);
-        $child
-            ->expects($this->once())
-            ->method('assemble')
-            ->with($this->anything(), $this->equalTo('bar'));
+        $child = $this->prophesize(RouteInterface::class);
+        $child->assemble([], 'bar')->shouldBeCalled();
 
-        $routeCollection = $this->getRouteCollection();
-        $routeCollection->insert('foo', $child);
+        $children = $this->prophesize(RouteCollectionInterface::class);
+        $children->get('foo')->willReturn($child->reveal());
 
-        $this->route->setChildren($routeCollection);
-        $this->route->assemble([], 'foo/bar');
+        $this->buildRoute([
+            'children' => $children->reveal(),
+        ])->assemble([], 'foo/bar');
     }
 
     public function testAssemblePassesNullWithoutFurtherChildren()
     {
-        $child = $this->getMock(RouteInterface::class);
-        $child
-            ->expects($this->once())
-            ->method('assemble')
-            ->with($this->anything(), $this->equalTo(null));
+        $child = $this->prophesize(RouteInterface::class);
+        $child->assemble([], null)->shouldBeCalled();
 
-        $routeCollection = $this->getRouteCollection();
-        $routeCollection->insert('foo', $child);
+        $children = $this->prophesize(RouteCollectionInterface::class);
+        $children->get('foo')->willReturn($child->reveal());
 
-        $this->route->setChildren($routeCollection);
-        $this->route->assemble([], 'foo');
-    }
-
-    public function testAssembleIgnoresTrailingSlash()
-    {
-        $child = $this->getMock(RouteInterface::class);
-        $child
-            ->expects($this->once())
-            ->method('assemble')
-            ->with($this->anything(), $this->equalTo(null));
-
-        $routeCollection = $this->getRouteCollection();
-        $routeCollection->insert('foo', $child);
-
-        $this->route->setChildren($routeCollection);
-        $this->route->assemble([], 'foo/');
+        $this->buildRoute([
+            'children' => $children->reveal(),
+        ])->assemble([], 'foo');
     }
 
     /**
-     * @return RouteCollection
-     */
-    protected function getRouteCollection()
-    {
-        return new RouteCollection($this->getMock(ServiceLocatorInterface::class));
-    }
-
-    /**
-     * @return ParserInterface|MockObject
+     * @return ParserInterface
      */
     protected function getIncompletePathParser()
     {
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->once())
-            ->method('parse')
-            ->with($this->equalTo('/foo/bar'), $this->equalTo(4))
-            ->will($this->returnValue(new ParseResult(['foo' => 'bar'], 1)));
+        $pathParser = $this->prophesize(ParserInterface::class);
+        $pathParser->parse('/foo/bar', 4)->willReturn(new ParseResult(['foo' => 'bar'], 1));
 
-        return $pathParser;
+        return $pathParser->reveal();
     }
 
     /**
-     * @return ParserInterface|MockObject
+     * @return ParserInterface
      */
     protected function getSuccessfullPathParser()
     {
-        $pathParser = $this->getMock(ParserInterface::class);
-        $pathParser
-            ->expects($this->once())
-            ->method('parse')
-            ->with($this->equalTo('/foo/bar'), $this->equalTo(4))
-            ->will($this->returnValue(new ParseResult(['foo' => 'bar'], 4)));
+        $pathParser = $this->prophesize(ParserInterface::class);
+        $pathParser->parse('/foo/bar', 4)->willReturn(new ParseResult(['foo' => 'bar'], 4));
 
-        return $pathParser;
+        return $pathParser->reveal();
     }
 
     /**
-     * @return ParserInterface|MockObject
+     * @return ParserInterface
      */
     protected function getSuccessfullHostnameParser()
     {
-        $hostnameParser = $this->getMock(ParserInterface::class);
-        $hostnameParser
-            ->expects($this->once())
-            ->method('parse')
-            ->with($this->equalTo('example.com'), $this->equalTo(0))
-            ->will($this->returnValue(new ParseResult(['baz' => 'bat'], 11)));
+        $hostnameParser = $this->prophesize(ParserInterface::class);
+        $hostnameParser->parse('example.com', 0)->willReturn(new ParseResult(['baz' => 'bat'], 11));
 
-        return $hostnameParser;
+        return $hostnameParser->reveal();
     }
 
     /**
-     * @param array $results
+     * @param  array $options
+     * @return Generic
      */
-    protected function assignChildren(array $results)
+    protected function buildRoute(array $options = [])
     {
-        $routeCollection = $this->getRouteCollection();
+        return new Generic(
+            isset($options['path_parser']) ? $options['path_parser'] : null,
+            isset($options['hostname_parser']) ? $options['hostname_parser'] : null,
+            isset($options['methods']) ? $options['methods'] : null,
+            isset($options['secure']) ? $options['secure'] : null,
+            isset($options['port']) ? $options['port'] : null,
+            isset($options['defaults']) ? $options['defaults'] : [],
+            isset($options['children']) ? $options['children'] : null
+        );
+    }
 
-        foreach ($results as $index => $result) {
-            $childRoute = $this->getMock(RouteInterface::class);
+    /**
+     * @return ServerRequestInterface
+     */
+    protected function buildRequest($secure = false)
+    {
+        $switchScheme = $this->prophesize(UriInterface::class);
+        $switchScheme->__toString()->willReturn(($secure ? 'http' : 'https') . '://example.com/foo/bar');
 
-            if ($result === 'no-call') {
-                $childRoute
-                    ->expects($this->never())
-                    ->method('match');
-            } else {
-                $childRoute
-                    ->expects($this->once())
-                    ->method('match')
-                    ->with($this->equalTo($this->request), $this->equalTo(5))
-                    ->will($this->returnValue($result));
+        $uri = $this->prophesize(UriInterface::class);
+        $uri->getScheme()->willReturn($secure ? 'https' : 'http');
+        $uri->getHost()->willReturn('example.com');
+        $uri->getPort()->willReturn(80);
+        $uri->getPath()->willReturn('/foo/bar');
+        $uri->withScheme($secure ? 'http' : 'https')->willReturn($switchScheme->reveal());
+
+        $request = $this->prophesize(ServerRequestInterface::class);
+        $request->getMethod()->willReturn('GET');
+        $request->getUri()->willReturn($uri->reveal());
+
+        return $request->reveal();
+    }
+
+    /**
+     * @param  array $routes
+     * @return RouteCollectionInterface
+     */
+    protected function buildChildren(array $routes = [])
+    {
+        $children = $this->prophesize(RouteCollectionInterface::class);
+        $children->willImplement(IteratorAggregate::class);
+
+        $testCase = $this;
+
+        $children->getIterator()->will(function () use ($testCase, $routes) {
+            foreach ($routes as $matchResult) {
+                if ('no-call' === $matchResult) {
+                    $child = $testCase->prophesize(RouteInterface::class);
+                    $child->match(
+                        Argument::type(ServerRequestInterface::class),
+                        5
+                    )->shouldNotBeCalled();
+                } else {
+                    $child = $testCase->prophesize(RouteInterface::class);
+                    $child->match(
+                        Argument::type(ServerRequestInterface::class),
+                        5
+                    )->shouldBeCalled()->willReturn($matchResult);
+                }
+
+                yield $child->reveal();
             }
+        });
 
-            $routeCollection->insert('child' . $index, $childRoute);
+        return $children->reveal();
+    }
+
+    /**
+     * @param array $values
+     */
+    protected function assertAssemblyResult(AssemblyResult $assemblyResult, array $values)
+    {
+        foreach ($assemblyResult as $key => $value) {
+            if (!isset($values[$key])) {
+                $this->assertNull($value);
+            } else {
+                $this->assertSame($values[$key], $value);
+            }
         }
-
-        $this->route->setChildren($routeCollection);
     }
 }

@@ -20,7 +20,7 @@ class ParserManagerTest extends TestCase
 {
     public function testRegisteredServices()
     {
-        $parserManager = new ParserManager($this->getMock(ContainerInterface::class));
+        $parserManager = new ParserManager($this->prophesize(ContainerInterface::class)->reveal());
         $this->assertTrue($parserManager->has('HostnameSegment'));
         $this->assertTrue($parserManager->has('PathSegment'));
     }

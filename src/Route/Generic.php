@@ -15,7 +15,7 @@ use Dash\MatchResult\SchemeNotAllowed;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Parser\ParserInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * A generic route which takes care of all HTTP aspects.
@@ -23,18 +23,11 @@ use Psr\Http\Message\RequestInterface;
 class Generic implements RouteInterface
 {
     /**
-     * List of valid methods.
-     *
-     * @var array
-     */
-    protected static $validMethods = ['OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'PATCH'];
-
-    /**
      * Allowed methods on this route.
      *
-     * @var array|string
+     * @var array|null
      */
-    protected $methods = '*';
+    protected $methods;
 
     /**
      * Whether to force the route to be HTTPS or HTTP.
@@ -49,12 +42,12 @@ class Generic implements RouteInterface
     protected $port;
 
     /**
-     * @var null|ParserInterface
+     * @var ParserInterface|null
      */
     protected $pathParser;
 
     /**
-     * @var null|ParserInterface
+     * @var ParserInterface|null
      */
     protected $hostnameParser;
 
@@ -64,94 +57,58 @@ class Generic implements RouteInterface
     protected $defaults = [];
 
     /**
-     * @var RouteCollectionInterface
+     * @var RouteCollectionInterface|RouteInterface[]|null
      */
     protected $children;
 
     /**
-     * @param string|array $methods
+     * @param ParserInterface|null          $pathParser
+     * @param ParserInterface|null          $hostnameParser
+     * @param array|null                    $methods
+     * @param bool|null                     $secure
+     * @param int|null                      $port
+     * @param array                         $defaults
+     * @param RouteCollectionInterface|null $children
      */
-    public function setMethods($methods)
-    {
-        $this->methods = [];
-
-        if (is_string($methods)) {
-            if ('' === $methods || '*' === $methods) {
-                $this->methods = $methods;
-                return;
-            } else {
-                $methods = [$methods];
-            }
-        } elseif (!is_array($methods)) {
-            throw new Exception\InvalidArgumentException('$methods must either be a string or an array');
-        }
-
-        foreach ($methods as $method) {
-            $method = strtoupper($method);
-
-            if (!in_array($method, self::$validMethods)) {
-                throw new Exception\InvalidArgumentException(sprintf('%s is not a valid HTTP method', $method));
-            }
-
-            $this->methods[$method] = true;
-        }
-
-        if (isset($this->methods['GET']) xor isset($this->methods['HEAD'])) {
-            // Implicitly enable HEAD on GET, and vise versa.
-            $this->methods['GET']  = true;
-            $this->methods['HEAD'] = true;
-        }
-    }
-
-    /**
-     * @param bool|null $secure
-     */
-    public function setSecure($secure)
-    {
-        $this->secure = $secure === null ? null : (bool) $secure;
-    }
-
-    /**
-     * @param int|null $port
-     */
-    public function setPort($port)
-    {
-        $this->port = $port === null ? null : (int) $port;
-    }
-
-    /**
-     * @param ParserInterface $pathParser
-     */
-    public function setPathParser(ParserInterface $pathParser = null)
-    {
-        $this->pathParser = $pathParser;
-    }
-
-    /**
-     * @param ParserInterface $hostnameParser
-     */
-    public function setHostnameParser(ParserInterface $hostnameParser = null)
-    {
+    public function __construct(
+        ParserInterface $pathParser = null,
+        ParserInterface $hostnameParser = null,
+        array $methods = null,
+        $secure = null,
+        $port = null,
+        array $defaults = [],
+        RouteCollectionInterface $children = null
+    ) {
+        $this->pathParser     = $pathParser;
         $this->hostnameParser = $hostnameParser;
+        $this->defaults       = $defaults;
+        $this->children       = $children;
+
+        if (null !== $secure) {
+            $this->secure = (bool) $secure;
+        }
+
+        if (null !== $port) {
+            $this->port = (int) $port;
+        }
+
+        if (null !== $methods) {
+            $this->methods = array_flip(array_map('strtoupper', array_values($methods)));
+
+            if (isset($this->methods['GET']) xor isset($this->methods['HEAD'])) {
+                // Implicitly enable HEAD on GET, and vise versa.
+                $this->methods['GET']  = true;
+                $this->methods['HEAD'] = true;
+            }
+        }
     }
 
     /**
-     * @param array $defaults
+     * {@inheritdoc}
+     *
+     * @throws Exception\UnexpectedValueException
      */
-    public function setDefaults(array $defaults)
-    {
-        $this->defaults = $defaults;
-    }
-
-    /**
-     * @param RouteCollectionInterface $children
-     */
-    public function setChildren(RouteCollectionInterface $children = null)
-    {
-        $this->children = $children;
-    }
-
-    public function match(RequestInterface $request, $pathOffset)
+    public function match(ServerRequestInterface $request, $pathOffset)
     {
         $uri = $request->getUri();
 
@@ -181,34 +138,36 @@ class Generic implements RouteInterface
         }
 
         // Next match the path.
+        $completePathMatched = false;
+
         if (null !== $this->pathParser) {
             if (null === ($pathResult = $this->pathParser->parse($uri->getPath(), $pathOffset))) {
                 return null;
             }
 
             $pathOffset += $pathResult->getMatchLength();
+            $completePathMatched = ($pathOffset === strlen($uri->getPath()));
         }
 
-        $completePathMatched = ($pathOffset === strlen($uri->getPath()));
-
         // Looks good so far, let's create a match.
-        $match = new SuccessfulMatch($this->defaults);
+        $params = $this->defaults;
 
         if (isset($hostnameResult)) {
-            $match->addParseResult($hostnameResult);
+            $params = $hostnameResult->getParams() + $params;
         }
 
         if (isset($pathResult)) {
-            $match->addParseResult($pathResult);
+            $params = $pathResult->getParams() + $params;
         }
 
         if ($completePathMatched) {
-            if ('' === $this->methods) {
-                return null;
+            if (null === $this->methods || isset($this->methods[$request->getMethod()])) {
+                return new SuccessfulMatch($params);
             }
 
-            if ('*' === $this->methods || isset($this->methods[$request->getMethod()])) {
-                return $match;
+            if (!$this->methods) {
+                // Special case: when no methods are defined at all, this route may simply not terminate.
+                return null;
             }
 
             return new MethodNotAllowed(array_keys($this->methods));
@@ -237,16 +196,14 @@ class Generic implements RouteInterface
                     ));
                 }
 
-                $childMatch->prependRouteName($childName);
-                $match->merge($childMatch);
-                return $match;
+                return SuccessfulMatch::fromChildMatch($childMatch, $params, $childName);
             }
 
             if ($childMatch instanceof MethodNotAllowed) {
                 if ($methodNotAllowedResult === null) {
                     $methodNotAllowedResult = $childMatch;
                 } else {
-                    $methodNotAllowedResult->merge($childMatch);
+                    $methodNotAllowedResult = $methodNotAllowedResult::merge($methodNotAllowedResult, $childMatch);
                 }
                 continue;
             }
@@ -271,6 +228,8 @@ class Generic implements RouteInterface
     }
 
     /**
+     * {@inheritdoc}
+     *
      * @throws Exception\RuntimeException
      */
     public function assemble(array $params, $childName = null)

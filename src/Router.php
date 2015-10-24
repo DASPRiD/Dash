@@ -9,19 +9,21 @@
 
 namespace Dash;
 
-use Dash\Exception;
+use Dash\Exception\InvalidArgumentException;
+use Dash\Exception\RuntimeException;
+use Dash\Exception\UnexpectedValueException;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\MatchResult\UnsuccessfulMatch;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\RouterInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 
 class Router implements RouterInterface
 {
     /**
-     * @var RouteCollectionInterface
+     * @var RouteCollectionInterface|RouteInterface[]
      */
     protected $routeCollection;
 
@@ -34,20 +36,29 @@ class Router implements RouterInterface
      * Creates a new router.
      *
      * @param RouteCollectionInterface $routeCollection
-     * @param UriInterface             $baseUri
+     * @param UriInterface|string      $baseUri
      */
-    public function __construct(RouteCollectionInterface $routeCollection, UriInterface $baseUri)
+    public function __construct(RouteCollectionInterface $routeCollection, $baseUri)
     {
         $this->routeCollection = $routeCollection;
-        $this->baseUri = [
-            'scheme' => $baseUri->getScheme(),
-            'host'   => $baseUri->getHost(),
-            'port'   => $baseUri->getPort(),
-            'path'   => rtrim($baseUri->getPath(), '/'),
-        ];
+
+        if ($baseUri instanceof UriInterface) {
+            $this->setBaseUriFromObject($baseUri);
+        } elseif (is_string($baseUri)) {
+            $this->setBaseUriFromString($baseUri);
+        } else {
+            throw new InvalidArgumentException(sprintf(
+                'Expected base URI of type string or %s, got %s',
+                UriInterface::class,
+                is_object($baseUri) ? get_class($baseUri) : gettype($baseUri)
+            ));
+        }
 
         if ('' === $this->baseUri['scheme'] || '' === $this->baseUri['host']) {
-            throw new Exception\UnexpectedValueException('Base URI does not seem to be absolute');
+            throw new InvalidArgumentException(sprintf(
+                'Base URI "%s" does not seem to be canonical',
+                (string) $baseUri
+            ));
         }
 
         if (null === $this->baseUri['port']) {
@@ -56,20 +67,14 @@ class Router implements RouterInterface
     }
 
     /**
-     * Gets the route collection.
+     * {@inheritdoc}
      *
-     * @return RouteCollectionInterface
+     * @throws UnexpectedValueException
      */
-    public function getRouteCollection()
-    {
-        return $this->routeCollection;
-    }
-
-    public function match(RequestInterface $request)
+    public function match(ServerRequestInterface $request)
     {
         $basePathLength = strlen($this->baseUri['path']);
 
-        /** @var RouteInterface $route */
         foreach ($this->routeCollection as $name => $route) {
             if (null === ($matchResult = $route->match($request, $basePathLength))) {
                 continue;
@@ -77,14 +82,14 @@ class Router implements RouterInterface
 
             if ($matchResult->isSuccess()) {
                 if (!$matchResult instanceof SuccessfulMatch) {
-                    throw new Exception\UnexpectedValueException(sprintf(
+                    throw new UnexpectedValueException(sprintf(
                         'Expected instance of %s, received %s',
                         SuccessfulMatch::class,
                         is_object($matchResult) ? get_class($matchResult) : gettype($matchResult)
                     ));
                 }
 
-                $matchResult->prependRouteName($name);
+                $matchResult = SuccessfulMatch::fromChildMatch($matchResult, [], $name);
             }
 
             return $matchResult;
@@ -94,12 +99,14 @@ class Router implements RouterInterface
     }
 
     /**
-     * @throws Exception\RuntimeException
+     * {@inheritdoc}
+     *
+     * @throws RuntimeException
      */
     public function assemble(array $params, array $options)
     {
         if (!isset($options['name'])) {
-            throw new Exception\RuntimeException('No route name was supplied');
+            throw new RuntimeException('No route name was supplied');
         }
 
         $nameParts  = explode('/', $options['name'], 2);
@@ -123,5 +130,39 @@ class Router implements RouterInterface
             $this->baseUri['port'],
             (isset($options['force_canonical']) && $options['force_canonical'])
         );
+    }
+
+    /**
+     * @param UriInterface $baseUri
+     */
+    protected function setBaseUriFromObject(UriInterface $baseUri)
+    {
+        $this->baseUri = [
+            'scheme' => $baseUri->getScheme(),
+            'host'   => $baseUri->getHost(),
+            'port'   => $baseUri->getPort(),
+            'path'   => rtrim($baseUri->getPath(), '/'),
+        ];
+    }
+
+    /**
+     * @param  string $baseUri
+     * @throws InvalidArgumentException
+     */
+    protected function setBaseUriFromString($baseUri)
+    {
+        if (false === ($parts = parse_url($baseUri))) {
+            throw new InvalidArgumentException(sprintf(
+                'Base URI "%s" does not appear to be a valid URI',
+                $baseUri
+            ));
+        }
+
+        $this->baseUri = [
+            'scheme' => (isset($parts['scheme']) ? $parts['scheme'] : ''),
+            'host'   => (isset($parts['host']) ? $parts['host'] : ''),
+            'port'   => (isset($parts['port']) ? $parts['port'] : null),
+            'path'   => (isset($parts['path']) ? rtrim($parts['path'], '/') : ''),
+        ];
     }
 }

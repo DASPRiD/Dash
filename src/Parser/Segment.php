@@ -64,6 +64,9 @@ class Segment implements ParserInterface
         $this->constraints = $constraints;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function parse($input, $offset)
     {
         $result = preg_match('(\G' . $this->getRegex() . ')', $input, $matches, null, $offset);
@@ -83,6 +86,9 @@ class Segment implements ParserInterface
         return new ParseResult($params, strlen($matches[0]));
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function compile(array $params, array $defaults)
     {
         return $this->buildString(

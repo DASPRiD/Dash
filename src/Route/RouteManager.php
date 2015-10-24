@@ -17,17 +17,17 @@ use Zend\ServiceManager\AbstractPluginManager;
 class RouteManager extends AbstractPluginManager
 {
     /**
-     * @var bool
+     * {@inheritdoc}
      */
     protected $shareByDefault = false;
 
     /**
-     * @var string
+     * {@inheritdoc}
      */
     protected $instanceOf = RouteInterface::class;
 
     /**
-     * @var array
+     * {@inheritdoc}
      */
     protected $factories = [
         'Generic' => GenericFactory::class,

@@ -9,9 +9,10 @@
 
 namespace DashTest\Route;
 
+use Dash\Route\RouteManager;
 use Dash\Route\RouteManagerFactory;
+use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\ServiceManager;
 
 /**
  * @covers Dash\Route\RouteManagerFactory
@@ -20,36 +21,30 @@ class RouteManagerFactoryTest extends TestCase
 {
     public function testFactorySucceedsWithoutConfig()
     {
-        $factory = new RouteManagerFactory();
-        $factory($this->getServiceLocator([]), '');
+        $factory      = new RouteManagerFactory();
+        $routeManager = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
+
+        $this->assertInstanceOf(RouteManager::class, $routeManager);
     }
 
     public function testFactoryWithConfig()
     {
-        $factory      = new RouteManagerFactory();
-        $routeManager = $factory($this->getServiceLocator([
+        $container = $this->prophesize(ContainerInterface::class);
+        $container->has('config')->willReturn(true);
+        $container->get('config')->willReturn([
             'dash' => [
                 'route_manager' => [
                     'services' => [
-                        'foo' => [],
+                        'test' => true,
                     ],
                 ],
             ],
-        ]), '');
-
-        $this->assertTrue($routeManager->has('foo'));
-    }
-
-    /**
-     * @param  array $config
-     * @return ServiceManager
-     */
-    protected function getServiceLocator(array $config)
-    {
-        return new ServiceManager([
-            'services' => [
-                'config' => $config,
-            ]
         ]);
+
+        $factory      = new RouteManagerFactory();
+        $routeManager = $factory($container->reveal(), '');
+
+        $this->assertInstanceOf(RouteManager::class, $routeManager);
+        $this->assertAttributeSame(['test' => true], 'services', $routeManager);
     }
 }

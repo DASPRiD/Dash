@@ -17,8 +17,8 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class AbstractFailedMatchTest extends TestCase
 {
-    public function testIsSuccess()
+    public function testIsFailure()
     {
-        $this->assertFalse($this->getMock(AbstractFailedMatch::class)->isSuccess());
+        $this->assertFalse($this->prophesize()->willExtend(AbstractFailedMatch::class)->reveal()->isSuccess());
     }
 }

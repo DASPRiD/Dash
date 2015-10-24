@@ -9,69 +9,53 @@
 
 namespace DashTest;
 
-use Dash\MatchResult\SuccessfulMatch;
-use Dash\Parser\ParserManager;
-use Dash\Route\RouteManager;
+use Dash\RouteCollection\RouteCollectionInterface;
+use Dash\Router;
 use Dash\RouterFactory;
-use GuzzleHttp\Psr7\Request;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\ServiceManager;
 
 /**
  * @covers Dash\RouterFactory
  */
 class RouterFactoryTest extends TestCase
 {
-    protected $config = [
-        'dash' => [
-            'routes' => [
-                'user' => ['/user', ['action' => 'index', 'controller' => 'UserController'], 'children' => [
-                    'create' => ['/create', ['action' => 'create'], ['get', 'post']],
-                    'edit' => ['/edit/:id', ['action' => 'edit'], ['get', 'post'], 'constraints' => ['id' => '\d+']],
-                    'delete' => ['/delete/:id', ['action' => 'delete'], 'constraints' => ['id' => '\d+']],
-                ]],
-            ],
-            'base_uri' => 'http://example.com/'
-        ],
-    ];
-
-    public function testFactorySucceedsWithoutConfig()
+    public function testBaseUriIsPassed()
     {
-        $factory = new RouterFactory();
-        $factory($this->getServiceLocator(['dash' => ['base_uri' => 'http://example.com/']]), '');
+        $this->assertAttributeSame(
+            [
+                'scheme' => 'http',
+                'host' => 'example.com',
+                'port' => 80,
+                'path' => '',
+            ],
+            'baseUri',
+            $this->getRouter()
+        );
     }
 
-    public function testFactoryIntegration()
+    public function testRootRouteCollectionIsPassed()
     {
-        $factory = new RouterFactory();
-        $router  = $factory($this->getServiceLocator($this->config), '');
-        $request = new Request('GET', 'http://example.com/user/edit/1');
-        $match   = $router->match($request);
-
-        $this->assertInstanceOf(SuccessfulMatch::class, $match);
-        $this->assertEquals('user/edit', $match->getRouteName());
-        $this->assertEquals(['controller' => 'UserController', 'action' => 'edit', 'id' => '1'], $match->getParams());
+        $this->assertTrue(self::readAttribute($this->getRouter(), 'routeCollection')->get('test'));
     }
 
     /**
-     * @param  array $config
-     * @return ServiceManager
+     * @return Router
      */
-    protected function getServiceLocator(array $config)
+    protected function getRouter()
     {
-        return new ServiceManager([
-            'factories' => [
-                ParserManager::class => function (ContainerInterface $container) {
-                    return new ParserManager($container);
-                },
-                RouteManager::class => function (ContainerInterface $container) {
-                    return new RouteManager($container);
-                },
-            ],
-            'services' => [
-                'config' => $config,
-            ]
-        ]);
+        $routeCollection = $this->prophesize(RouteCollectionInterface::class);
+        $routeCollection->get('test')->willReturn(true);
+
+        $container = $this->prophesize(ContainerInterface::class);
+        $container->get('DashRootRouteCollection')->willReturn($routeCollection->reveal());
+        $container->get('DashBaseUri')->willReturn('http://example.com');
+
+        $factory = new RouterFactory();
+        $router  = $factory($container->reveal(), '');
+
+        $this->assertInstanceOf(Router::class, $router);
+
+        return $router;
     }
 }

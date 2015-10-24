@@ -7,29 +7,30 @@
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\Parser;
+namespace Dash;
 
 use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Exception\ServiceNotCreatedException;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
- * Factory for the parser manager.
+ * Factory for a configured base URI.
  */
-class ParserManagerFactory implements FactoryInterface
+class BaseUriFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
      *
-     * @return ParserManager
+     * @return string
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $config = $container->has('config') ? $container->get('config') : [];
 
-        if (isset($config['dash']['parser_manager']) && is_array($config['dash']['parser_manager'])) {
-            return new ParserManager($container, $config['dash']['parser_manager']);
+        if (!isset($config['dash']['base_uri'])) {
+            throw new ServiceNotCreatedException('Missing "base_uri" key in "dash" section');
         }
 
-        return new ParserManager($container);
+        return $config['dash']['base_uri'];
     }
 }

@@ -10,80 +10,74 @@
 namespace Dash\Route;
 
 use Dash\Parser\ParserManager;
-use Dash\Parser\Segment;
-use Dash\RouteCollection\RouteCollection;
+use Dash\RouteCollection\LazyRouteCollection;
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
 class GenericFactory implements FactoryInterface
 {
     /**
-     * @param  ContainerInterface $container
-     * @param  string             $requestedName
-     * @param  array              $options
-     * @return Segment
+     * {@inheritdoc}
+     *
+     * @return Generic
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $route = new Generic();
-
         if ($options === null) {
-            return $route;
+            return new Generic();
         }
 
-        $parserManager = $container->get(ParserManager::class);
-        $routeManager  = $container->get(RouteManager::class);
-
+        // Parameter normalization
         if (!isset($options['path']) && isset($options[0])) {
             $options['path'] = $options[0];
         }
 
-        if (isset($options['path_parser'])) {
-            $route->setPathParser($parserManager->get($options['path_parser'], $options));
-        } elseif (isset($options['path'])) {
-            $route->setPathParser($parserManager->get('PathSegment', $options));
+        if (isset($options['defaults']) && isset($options[1])) {
+            $options['defaults'] += $options[1];
+        } elseif (isset($options[1])) {
+            $options['defaults'] = $options[1];
         }
 
-        if (isset($options['hostname_parser'])) {
-            $route->setHostnameParser($parserManager->get($options['hostname_parser'], $options));
-        } elseif (null !== ($options['hostname'] = (isset($options['hostname']) ? $options['hostname'] : null))) {
-            $route->setHostnameParser($parserManager->get('HostnameSegment', $options));
-        }
-
-        if (!isset($options['methods']) && isset($options[2])) {
+        if (isset($options['methods']) && isset($options[2])) {
+            $options['methods'] = array_merge($options[2], $options['methods']);
+        } elseif (isset($options[2])) {
             $options['methods'] = $options[2];
         }
 
-        if (isset($options['methods'])) {
-            $route->setMethods($options['methods']);
+        // Try to retrive path and hostname parser
+        $parserManager = $container->get(ParserManager::class);
+
+        if (isset($options['path_parser'])) {
+            $pathParser = $parserManager->build($options['path_parser'], $options);
+        } elseif (isset($options['path'])) {
+            $pathParser = $parserManager->build('PathSegment', $options);
+        } else {
+            $pathParser = null;
         }
 
-        if (isset($options['secure'])) {
-            $route->setSecure($options['secure']);
+        if (isset($options['hostname_parser'])) {
+            $hostnameParser = $parserManager->build($options['hostname_parser'], $options);
+        } elseif (isset($options['hostname'])) {
+            $hostnameParser = $parserManager->build('HostnameSegment', $options);
+        } else {
+            $hostnameParser = null;
         }
 
-        $defaults = isset($options[1]) ? $options[1] : [];
-
-        if (isset($options['defaults'])) {
-            $defaults = array_replace($defaults, $options['defaults']);
-        }
-
-        $route->setDefaults($defaults);
-
+        // Setup children if they exist
         if (isset($options['children'])) {
-            $routeList = new RouteCollection($routeManager);
-
-            foreach ($options['children'] as $name => $child) {
-                $routeList->insert(
-                    $name,
-                    $child,
-                    is_array($child) && isset($child['priority']) ? $child['priority'] : 1
-                );
-            }
-
-            $route->setChildren($routeList);
+            $children = new LazyRouteCollection($container->get(RouteManager::class), $options['children']);
+        } else {
+            $children = null;
         }
 
-        return $route;
+        return new Generic(
+            $pathParser,
+            $hostnameParser,
+            isset($options['methods']) ? $options['methods'] : null,
+            isset($options['secure']) ? $options['secure'] : null,
+            isset($options['port']) ? $options['port'] : null,
+            isset($options['defaults']) ? $options['defaults'] : [],
+            $children
+        );
     }
 }

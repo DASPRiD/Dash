@@ -17,7 +17,7 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class MethodNotAllowedTest extends TestCase
 {
-    public function testIsSuccess()
+    public function testIsFailure()
     {
         $this->assertFalse((new MethodNotAllowed([]))->isSuccess());
     }
@@ -29,8 +29,10 @@ class MethodNotAllowedTest extends TestCase
 
     public function testMerge()
     {
-        $result = new MethodNotAllowed(['GET', 'PUT']);
-        $result->merge(new MethodNotAllowed(['POST', 'GET']));
+        $result = MethodNotAllowed::merge(
+            new MethodNotAllowed(['GET', 'PUT']),
+            new MethodNotAllowed(['POST', 'GET'])
+        );
         $this->assertEquals(['GET', 'PUT', 'POST'], $result->getAllowedMethods());
     }
 }

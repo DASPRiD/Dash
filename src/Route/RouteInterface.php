@@ -10,7 +10,7 @@
 namespace Dash\Route;
 
 use Dash\MatchResult\MatchResultInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Interface every HTTP route must implement.
@@ -20,17 +20,17 @@ interface RouteInterface
     /**
      * Matches a request at a given path offset.
      *
-     * @param  HttpRequest $request
-     * @param  int         $pathOffset
-     * @return null|MatchResultInterface
+     * @param  ServerRequestInterface $request
+     * @param  int                    $pathOffset
+     * @return MatchResultInterface|null
      */
-    public function match(RequestInterface $request, $pathOffset);
+    public function match(ServerRequestInterface $request, $pathOffset);
 
     /**
      * Assembles a URL.
      *
      * @param  array       $params
-     * @param  null|string $childName
+     * @param  string|null $childName
      * @return AssemblyResult
      */
     public function assemble(array $params, $childName = null);

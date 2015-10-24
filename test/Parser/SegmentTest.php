@@ -192,7 +192,7 @@ class SegmentTest extends TestCase
      * @param Segment     $parser
      * @param string      $input
      * @param int         $offset
-     * @param array       $params
+     * @param array|null  $params
      * @param array|null  $defaults
      */
     public function testCompiling(Segment $parser, $input, $offset = 0, array $params = null, array $defaults = [])
