@@ -111,3 +111,11 @@ Module B
 ```
 
 `/user` now will no longer match, but `/userinfo` will match in it's place.
+
+Development
+===========
+
+When doing performance-dependent changes, make sure to compare the benchmarks between master and your branch. To run
+them, execute the following command:
+
+`php vendor/bin/athletic -p benchmark -b vendor/autoload.php`

@@ -14,10 +14,12 @@
         "psr/http-message": "~1.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.0",
+        "phpunit/phpunit": "^4.0",
         "zendframework/zend-modulemanager": "^2.6",
         "zendframework/zend-servicemanager": "dev-develop as 3.0.0",
-        "squizlabs/php_codesniffer": "~2.3"
+        "squizlabs/php_codesniffer": "^2.3",
+        "athletic/athletic": "^0.1.8",
+        "zendframework/zend-diactoros": "^1.1"
     },
     "suggest": {
         "zendframework/zend-modulemanager": "Allows direct integration with Zend Framework applications",
@@ -30,7 +32,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "DashTest\\": "test/"
+            "DashTest\\": "test/",
+            "DashBench\\": "benchmark/"
         }
     }
 }
