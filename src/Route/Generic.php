@@ -15,6 +15,7 @@ use Dash\MatchResult\SchemeNotAllowed;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Parser\ParserInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
+use Dash\RouteCollection\RouteCollectionUtils;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -178,52 +179,7 @@ class Generic implements RouteInterface
             return null;
         }
 
-        $methodNotAllowedResult = null;
-        $schemeNotAllowedResult = null;
-
-        foreach ($this->children as $childName => $childRoute) {
-            if (null === ($childMatch = $childRoute->match($request, $pathOffset))) {
-                continue;
-            }
-
-            if ($childMatch->isSuccess()) {
-                if (!$childMatch instanceof SuccessfulMatch) {
-                    throw new Exception\UnexpectedValueException(sprintf(
-                        'Expected instance of %s, received %s',
-                        SuccessfulMatch::class,
-                        is_object($childMatch) ? get_class($childMatch) : gettype($childMatch)
-                    ));
-                }
-
-                return SuccessfulMatch::fromChildMatch($childMatch, $params, $childName);
-            }
-
-            if ($childMatch instanceof MethodNotAllowed) {
-                if ($methodNotAllowedResult === null) {
-                    $methodNotAllowedResult = $childMatch;
-                } else {
-                    $methodNotAllowedResult = $methodNotAllowedResult::merge($methodNotAllowedResult, $childMatch);
-                }
-                continue;
-            }
-
-            if ($childMatch instanceof SchemeNotAllowed) {
-                $schemeNotAllowedResult = $schemeNotAllowedResult ?: $childMatch;
-                continue;
-            }
-
-            return $childMatch;
-        }
-
-        if (null !== $schemeNotAllowedResult) {
-            return $schemeNotAllowedResult;
-        }
-
-        if (null !== $methodNotAllowedResult) {
-            return $methodNotAllowedResult;
-        }
-
-        return null;
+        return RouteCollectionUtils::matchRouteCollection($this->children, $request, $pathOffset, $params);
     }
 
     /**

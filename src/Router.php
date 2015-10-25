@@ -16,6 +16,7 @@ use Dash\MatchResult\SuccessfulMatch;
 use Dash\MatchResult\UnsuccessfulMatch;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
+use Dash\RouteCollection\RouteCollectionUtils;
 use Dash\RouterInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -75,27 +76,12 @@ class Router implements RouterInterface
     {
         $basePathLength = strlen($this->baseUri['path']);
 
-        foreach ($this->routeCollection as $name => $route) {
-            if (null === ($matchResult = $route->match($request, $basePathLength))) {
-                continue;
-            }
-
-            if ($matchResult->isSuccess()) {
-                if (!$matchResult instanceof SuccessfulMatch) {
-                    throw new UnexpectedValueException(sprintf(
-                        'Expected instance of %s, received %s',
-                        SuccessfulMatch::class,
-                        is_object($matchResult) ? get_class($matchResult) : gettype($matchResult)
-                    ));
-                }
-
-                $matchResult = SuccessfulMatch::fromChildMatch($matchResult, [], $name);
-            }
-
-            return $matchResult;
-        }
-
-        return new UnsuccessfulMatch();
+        return RouteCollectionUtils::matchRouteCollection(
+            $this->routeCollection,
+            $request,
+            $basePathLength,
+            []
+        ) ?: new UnsuccessfulMatch();
     }
 
     /**
