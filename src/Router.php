@@ -103,13 +103,9 @@ class Router implements RouterInterface
      *
      * @throws RuntimeException
      */
-    public function assemble(array $params, array $options)
+    public function assemble($routeName, array $params = [], array $options = [])
     {
-        if (!isset($options['name'])) {
-            throw new RuntimeException('No route name was supplied');
-        }
-
-        $nameParts  = explode('/', $options['name'], 2);
+        $nameParts  = explode('/', $routeName, 2);
         $parentName = $nameParts[0];
         $childName  = isset($nameParts[1]) ? $nameParts[1] : null;
 
