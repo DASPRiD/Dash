@@ -27,6 +27,32 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class RouteCollectionUtilsTest extends TestCase
 {
+    public function testNullReturnOnNoMatch()
+    {
+        $this->assertNull(RouteCollectionUtils::matchRouteCollection(
+            $this->buildRouteCollection([]),
+            $this->prophesize(ServerRequestInterface::class)->reveal(),
+            0,
+            []
+        ));
+    }
+
+    public function testSuccessfulMatchResultIsReturned()
+    {
+        $expectedMatchResult = $this->prophesize(SuccessfulMatch::class);
+        $expectedMatchResult->getRouteName()->willReturn(null);
+        $expectedMatchResult->getParams()->willReturn([]);
+
+        $matchResult = RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+            'foo' => null,
+            'bar' => $expectedMatchResult->reveal(),
+        ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
+
+        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertSame('bar', $matchResult->getRouteName());
+        $this->assertSame('bar', $matchResult->getRouteName());
+    }
+
     public function testUnknownMatchResultTakesPrecedence()
     {
         $expectedMatchResult = $this->prophesize(MatchResultInterface::class)->reveal();
@@ -113,7 +139,7 @@ class RouteCollectionUtilsTest extends TestCase
         $testCase = $this;
 
         $routeCollection->getIterator()->will(function () use ($testCase, $routes) {
-            foreach ($routes as $matchResult) {
+            foreach ($routes as $name => $matchResult) {
                 if ('no-call' === $matchResult) {
                     $route = $testCase->prophesize(RouteInterface::class);
                     $route->match(
@@ -128,7 +154,7 @@ class RouteCollectionUtilsTest extends TestCase
                     )->shouldBeCalled()->willReturn($matchResult);
                 }
 
-                yield $route->reveal();
+                yield $name => $route->reveal();
             }
         });
 

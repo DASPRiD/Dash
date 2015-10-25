@@ -23,6 +23,8 @@ final class RouteCollectionUtils
 {
     /**
      * This is a purely static class, so disallow instantiating.
+     *
+     * @codeCoverageIgnore
      */
     private function __construct()
     {
