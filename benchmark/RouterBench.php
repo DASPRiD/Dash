@@ -88,7 +88,7 @@ class RouterBench extends AthleticEvent
      */
     public function assemble()
     {
-        $this->assemblyRouter->assemble(['id' => 100], ['name' => 'route100/edit']);
+        $this->assemblyRouter->assemble('route100/edit', ['id' => 100]);
     }
 
     /**
