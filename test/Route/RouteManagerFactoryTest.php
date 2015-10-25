@@ -9,9 +9,9 @@
 
 namespace DashTest\Route;
 
+use Dash\AbstractPluginManagerFactory;
 use Dash\Route\RouteManager;
 use Dash\Route\RouteManagerFactory;
-use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -19,32 +19,16 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class RouteManagerFactoryTest extends TestCase
 {
-    public function testFactorySucceedsWithoutConfig()
+    public function testFactoryUsesAbstractPluginManagerFactory()
     {
-        $factory      = new RouteManagerFactory();
-        $routeManager = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
-
-        $this->assertInstanceOf(RouteManager::class, $routeManager);
+        $factory = new RouteManagerFactory();
+        $this->assertInstanceOf(AbstractPluginManagerFactory::class, $factory);
     }
 
-    public function testFactoryWithConfig()
+    public function testFactorySettings()
     {
-        $container = $this->prophesize(ContainerInterface::class);
-        $container->has('config')->willReturn(true);
-        $container->get('config')->willReturn([
-            'dash' => [
-                'route_manager' => [
-                    'services' => [
-                        'test' => true,
-                    ],
-                ],
-            ],
-        ]);
-
-        $factory      = new RouteManagerFactory();
-        $routeManager = $factory($container->reveal(), '');
-
-        $this->assertInstanceOf(RouteManager::class, $routeManager);
-        $this->assertAttributeSame(['test' => true], 'services', $routeManager);
+        $factory = new RouteManagerFactory();
+        $this->assertAttributeSame('route_manager', 'configKey', $factory);
+        $this->assertAttributeSame(RouteManager::class, 'className', $factory);
     }
 }

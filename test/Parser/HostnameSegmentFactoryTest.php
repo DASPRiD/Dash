@@ -9,9 +9,8 @@
 
 namespace DashTest\Parser;
 
+use Dash\Parser\AbstractSegmentFactory;
 use Dash\Parser\HostnameSegmentFactory;
-use Dash\Parser\Segment;
-use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -19,64 +18,16 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class HostnameSegmentFactoryTest extends TestCase
 {
-    public function testFactoryWithoutConfiguration()
+    public function testFactoryUsesAbstractSegmentFactory()
     {
         $factory = new HostnameSegmentFactory();
-        $parser  = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
-
-        $this->assertInstanceOf(Segment::class, $parser);
-        $this->assertAttributeSame('.', 'delimiter', $parser);
-        $this->assertAttributeSame('', 'pattern', $parser);
-        $this->assertAttributeSame([], 'constraints', $parser);
+        $this->assertInstanceOf(AbstractSegmentFactory::class, $factory);
     }
 
-    public function testFactoryWithConfiguration()
+    public function testFactorySettings()
     {
         $factory = new HostnameSegmentFactory();
-        $parser = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-                'hostname'    => ':foo.example.com',
-                'constraints' => ['foo' => '1'],
-            ]
-        );
-
-        $this->assertInstanceOf(Segment::class, $parser);
-        $this->assertAttributeSame('.', 'delimiter', $parser);
-        $this->assertAttributeSame(':foo.example.com', 'pattern', $parser);
-        $this->assertAttributeSame(['foo' => '1'], 'constraints', $parser);
-    }
-
-    public function testFactoryReusesInstancesWithSameConfiguration()
-    {
-        $factory = new HostnameSegmentFactory();
-        $parser1 = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-                'hostname'    => ':foo.example.com',
-                'constraints' => ['foo' => '1'],
-            ]
-        );
-        $parser2 = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-                'hostname'    => ':foo.example.com',
-                'constraints' => ['foo' => '1'],
-            ]
-        );
-        $parser3 = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-                'hostname'    => ':bar.example.com',
-                'constraints' => ['bar' => '1'],
-            ]
-        );
-
-        $this->assertSame($parser1, $parser2);
-        $this->assertNotSame($parser1, $parser3);
+        $this->assertAttributeSame('hostname', 'patternOptionName', $factory);
+        $this->assertAttributeSame('.', 'delimiter', $factory);
     }
 }

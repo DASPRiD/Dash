@@ -9,9 +9,9 @@
 
 namespace DashTest\Parser;
 
+use Dash\AbstractPluginManagerFactory;
 use Dash\Parser\ParserManager;
 use Dash\Parser\ParserManagerFactory;
-use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -19,32 +19,16 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class ParserManagerFactoryTest extends TestCase
 {
-    public function testFactorySucceedsWithoutConfig()
+    public function testFactoryUsesAbstractPluginManagerFactory()
     {
-        $factory       = new ParserManagerFactory();
-        $parserManager = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
-
-        $this->assertInstanceOf(ParserManager::class, $parserManager);
+        $factory = new ParserManagerFactory();
+        $this->assertInstanceOf(AbstractPluginManagerFactory::class, $factory);
     }
 
-    public function testFactoryWithConfig()
+    public function testFactorySettings()
     {
-        $container = $this->prophesize(ContainerInterface::class);
-        $container->has('config')->willReturn(true);
-        $container->get('config')->willReturn([
-            'dash' => [
-                'parser_manager' => [
-                    'services' => [
-                        'test' => true,
-                    ],
-                ],
-            ],
-        ]);
-
-        $factory       = new ParserManagerFactory();
-        $parserManager = $factory($container->reveal(), '');
-
-        $this->assertInstanceOf(ParserManager::class, $parserManager);
-        $this->assertAttributeSame(['test' => true], 'services', $parserManager);
+        $factory = new ParserManagerFactory();
+        $this->assertAttributeSame('parser_manager', 'configKey', $factory);
+        $this->assertAttributeSame(ParserManager::class, 'className', $factory);
     }
 }
