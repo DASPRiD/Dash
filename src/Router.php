@@ -12,9 +12,7 @@ namespace Dash;
 use Dash\Exception\InvalidArgumentException;
 use Dash\Exception\RuntimeException;
 use Dash\Exception\UnexpectedValueException;
-use Dash\MatchResult\SuccessfulMatch;
 use Dash\MatchResult\UnsuccessfulMatch;
-use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\RouteCollection\RouteCollectionUtils;
 use Dash\RouterInterface;
@@ -24,7 +22,7 @@ use Psr\Http\Message\UriInterface;
 class Router implements RouterInterface
 {
     /**
-     * @var RouteCollectionInterface|RouteInterface[]
+     * @var RouteCollectionInterface
      */
     protected $routeCollection;
 

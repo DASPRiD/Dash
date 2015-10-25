@@ -58,7 +58,7 @@ class Generic implements RouteInterface
     protected $defaults = [];
 
     /**
-     * @var RouteCollectionInterface|RouteInterface[]|null
+     * @var RouteCollectionInterface|null
      */
     protected $children;
 
