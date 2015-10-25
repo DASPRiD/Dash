@@ -68,7 +68,7 @@ final class RouteCollectionUtils
                 if ($methodNotAllowedResult === null) {
                     $methodNotAllowedResult = $matchResult;
                 } else {
-                    $methodNotAllowedResult = $methodNotAllowedResult::merge($methodNotAllowedResult, $matchResult);
+                    $methodNotAllowedResult = MethodNotAllowed::merge($methodNotAllowedResult, $matchResult);
                 }
                 continue;
             }
