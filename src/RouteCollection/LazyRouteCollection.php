@@ -10,6 +10,7 @@
 namespace Dash\RouteCollection;
 
 use Dash\Exception;
+use Dash\Route\RouteInterface;
 use IteratorAggregate;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -66,6 +67,29 @@ class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
             throw new Exception\OutOfBoundsException(sprintf('Route with name "%s" was not found', $name));
         }
 
+        return $this->getInstance($name);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getIterator()
+    {
+        foreach ($this->routes as $name => $route) {
+            yield $name => $this->getInstance($name);
+        }
+    }
+
+    /**
+     * Returns an instance of a given route.
+     *
+     * We do not validate the existence of the route here again, as it is supposed to be checked by the calling method.
+     *
+     * @param  string $name
+     * @return RouteInterface
+     */
+    protected function getInstance($name)
+    {
         $route = &$this->routes[$name];
 
         if (null === $route['instance']) {
@@ -76,22 +100,5 @@ class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
         }
 
         return $route['instance'];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getIterator()
-    {
-        foreach ($this->routes as $name => &$route) {
-            if (null === $route['instance']) {
-                $route['instance'] = $this->routeManager->build(
-                    !isset($route['options']['type']) ? 'Generic' : $route['options']['type'],
-                    $route['options']
-                );
-            }
-
-            yield $name => $route['instance'];
-        }
     }
 }

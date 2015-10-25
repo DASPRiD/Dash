@@ -9,27 +9,20 @@
 
 namespace Dash\Parser;
 
-use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Dash\AbstractPluginManagerFactory;
 
 /**
  * Factory for the parser manager.
  */
-class ParserManagerFactory implements FactoryInterface
+class ParserManagerFactory extends AbstractPluginManagerFactory
 {
     /**
      * {@inheritdoc}
-     *
-     * @return ParserManager
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $config = $container->has('config') ? $container->get('config') : [];
+    protected $configKey = 'parser_manager';
 
-        if (isset($config['dash']['parser_manager']) && is_array($config['dash']['parser_manager'])) {
-            return new ParserManager($container, $config['dash']['parser_manager']);
-        }
-
-        return new ParserManager($container);
-    }
+    /**
+     * {@inheritdoc}
+     */
+    protected $className = ParserManager::class;
 }

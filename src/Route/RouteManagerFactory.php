@@ -9,27 +9,20 @@
 
 namespace Dash\Route;
 
-use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Dash\AbstractPluginManagerFactory;
 
 /**
  * Factory for the route manager.
  */
-class RouteManagerFactory implements FactoryInterface
+class RouteManagerFactory extends AbstractPluginManagerFactory
 {
     /**
      * {@inheritdoc}
-     *
-     * @return RouteManager
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $config = $container->has('config') ? $container->get('config') : [];
+    protected $configKey = 'route_manager';
 
-        if (isset($config['dash']['route_manager']) && is_array($config['dash']['route_manager'])) {
-            return new RouteManager($container, $config['dash']['route_manager']);
-        }
-
-        return new RouteManager($container);
-    }
+    /**
+     * {@inheritdoc}
+     */
+    protected $className = RouteManager::class;
 }
