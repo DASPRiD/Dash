@@ -167,14 +167,6 @@ class RouterTest extends TestCase
         $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
     }
 
-    public function testAssembleFailsWithoutRouteName()
-    {
-        $router = new Router($this->buildRouteCollection(), 'http://example.com/foo');
-
-        $this->setExpectedException(RuntimeException::class, 'No route name was supplied');
-        $router->assemble([], []);
-    }
-
     public function testAssemblePassesDownChildName()
     {
         $route = $this->prophesize(RouteInterface::class);
@@ -184,7 +176,7 @@ class RouterTest extends TestCase
             'foo' => $route->reveal(),
         ]), 'http://example.com/foo');
 
-        $router->assemble([], ['name' => 'foo/bar']);
+        $router->assemble('foo/bar');
     }
 
     public function testAssemblePassesNullWithoutFurtherChildren()
@@ -196,7 +188,7 @@ class RouterTest extends TestCase
             'foo' => $route->reveal(),
         ]), 'http://example.com/foo');
 
-        $router->assemble([], ['name' => 'foo']);
+        $router->assemble('foo');
     }
 
     public function testAssembleReturnsCanonicalUriWhenForced()
@@ -208,8 +200,8 @@ class RouterTest extends TestCase
             'foo' => $route->reveal(),
         ]), 'http://example.com/foo');
 
-        $this->assertEquals('http://example.com/foo', $router->assemble([], [
-            'name' => 'foo', 'force_canonical' => true
+        $this->assertEquals('http://example.com/foo', $router->assemble('foo', [], [
+            'force_canonical' => true
         ]));
     }
 
@@ -222,7 +214,7 @@ class RouterTest extends TestCase
             'foo' => $route->reveal(),
         ]), 'http://example.com/foo');
 
-        $this->assertEquals('/foo?foo=bar', $router->assemble([], ['name' => 'foo', 'query' => ['foo' => 'bar']]));
+        $this->assertEquals('/foo?foo=bar', $router->assemble('foo', [], ['query' => ['foo' => 'bar']]));
     }
 
     public function testAssembleFragment()
@@ -234,7 +226,7 @@ class RouterTest extends TestCase
             'foo' => $route->reveal(),
         ]), 'http://example.com/foo');
 
-        $this->assertEquals('/foo#foo', $router->assemble([], ['name' => 'foo', 'fragment' => 'foo']));
+        $this->assertEquals('/foo#foo', $router->assemble('foo', [], ['fragment' => 'foo']));
     }
 
     /**

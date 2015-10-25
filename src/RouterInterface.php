@@ -26,11 +26,12 @@ interface RouterInterface
     public function match(ServerRequestInterface $request);
 
     /**
-     * Assembles a response.
+     * Assembles a URL.
      *
-     * @param  array $params
-     * @param  array $options
+     * @param  string $routeName
+     * @param  array  $params
+     * @param  array  $options
      * @return string
      */
-    public function assemble(array $params, array $options);
+    public function assemble($routeName, array $params = [], array $options = []);
 }
