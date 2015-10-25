@@ -16,7 +16,7 @@ use ReflectionProperty;
 use Zend\ServiceManager\AbstractPluginManager;
 
 /**
- * @covers Dash\Parser\AbstractPluginManagerFactory
+ * @covers Dash\AbstractPluginManagerFactory
  */
 class AbstractPluginManagerFactoryTest extends TestCase
 {
