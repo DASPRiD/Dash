@@ -17,10 +17,16 @@ class HostnameSegmentFactory extends AbstractSegmentFactory
     /**
      * {@inheritdoc}
      */
-    protected $patternOptionName = 'hostname';
+    protected function getPatternOptionKey()
+    {
+        return 'hostname';
+    }
 
     /**
      * {@inheritdoc}
      */
-    protected $delimiter = '.';
+    protected function getDelimiter()
+    {
+        return '.';
+    }
 }

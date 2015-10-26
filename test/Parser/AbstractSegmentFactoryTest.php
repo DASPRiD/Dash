@@ -13,7 +13,6 @@ use Dash\Parser\AbstractSegmentFactory;
 use Dash\Parser\Segment;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use ReflectionProperty;
 
 /**
  * @covers Dash\Parser\AbstractSegmentFactory
@@ -83,16 +82,10 @@ class AbstractSegmentFactoryTest extends TestCase
 
     protected function buildFactory()
     {
-        $factory = $this->prophesize()->willExtend(AbstractSegmentFactory::class)->reveal();
+        $factory = $this->prophesize()->willExtend(AbstractSegmentFactory::class);
+        $factory->getPatternOptionKey()->willReturn('pattern');
+        $factory->getDelimiter()->willReturn('-');
 
-        $reflectionProperty = new ReflectionProperty(AbstractSegmentFactory::class, 'patternOptionName');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($factory, 'pattern');
-
-        $reflectionProperty = new ReflectionProperty(AbstractSegmentFactory::class, 'delimiter');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($factory, '-');
-
-        return $factory;
+        return $factory->reveal();
     }
 }

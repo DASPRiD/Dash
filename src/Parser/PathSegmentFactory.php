@@ -17,10 +17,16 @@ class PathSegmentFactory extends AbstractSegmentFactory
     /**
      * {@inheritdoc}
      */
-    protected $patternOptionName = 'path';
+    protected function getPatternOptionKey()
+    {
+        return 'path';
+    }
 
     /**
      * {@inheritdoc}
      */
-    protected $delimiter = '/';
+    protected function getDelimiter()
+    {
+        return '/';
+    }
 }

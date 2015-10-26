@@ -19,10 +19,16 @@ class RouteManagerFactory extends AbstractPluginManagerFactory
     /**
      * {@inheritdoc}
      */
-    protected $configKey = 'route_manager';
+    protected function getConfigKey()
+    {
+        return 'route_manager';
+    }
 
     /**
      * {@inheritdoc}
      */
-    protected $className = RouteManager::class;
+    protected function getClassName()
+    {
+        return RouteManager::class;
+    }
 }

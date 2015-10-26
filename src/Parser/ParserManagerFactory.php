@@ -19,10 +19,16 @@ class ParserManagerFactory extends AbstractPluginManagerFactory
     /**
      * {@inheritdoc}
      */
-    protected $configKey = 'parser_manager';
+    protected function getConfigKey()
+    {
+        return 'parser_manager';
+    }
 
     /**
      * {@inheritdoc}
      */
-    protected $className = ParserManager::class;
+    protected function getClassName()
+    {
+        return ParserManager::class;
+    }
 }

@@ -28,7 +28,11 @@ class RouteManagerFactoryTest extends TestCase
     public function testFactorySettings()
     {
         $factory = new RouteManagerFactory();
-        $this->assertAttributeSame('route_manager', 'configKey', $factory);
-        $this->assertAttributeSame(RouteManager::class, 'className', $factory);
+
+        $invoker = function ($methodName) { return $this->{$methodName}(); };
+        $protectedInvoker = $invoker->bindTo($factory, $factory);
+
+        $this->assertSame('route_manager', $protectedInvoker('getConfigKey'));
+        $this->assertSame(RouteManager::class, $protectedInvoker('getClassName'));
     }
 }

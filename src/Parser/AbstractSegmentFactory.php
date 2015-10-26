@@ -26,30 +26,32 @@ abstract class AbstractSegmentFactory implements FactoryInterface
     protected $cache = [];
 
     /**
-     * @var string
-     */
-    protected $patternOptionName;
-
-    /**
-     * @var string
-     */
-    protected $delimiter;
-
-    /**
      * {@inheritdoc}
      *
      * @return Segment
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $pattern     = (isset($options[$this->patternOptionName]) ? $options[$this->patternOptionName] : '');
+        $patternOptionKey = $this->getPatternOptionKey();
+
+        $pattern     = (isset($options[$patternOptionKey]) ? $options[$patternOptionKey] : '');
         $constraints = (isset($options['constraints']) ? $options['constraints'] : []);
         $key         = serialize([$pattern, $constraints]);
 
         if (!isset($this->cache[$key])) {
-            $this->cache[$key] = new Segment($this->delimiter, $pattern, $constraints);
+            $this->cache[$key] = new Segment($this->getDelimiter(), $pattern, $constraints);
         }
 
         return $this->cache[$key];
     }
+
+    /**
+     * @return string
+     */
+    abstract protected function getPatternOptionKey();
+
+    /**
+     * @return string
+     */
+    abstract protected function getDelimiter();
 }

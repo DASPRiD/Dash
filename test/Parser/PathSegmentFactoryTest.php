@@ -27,7 +27,11 @@ class PathSegmentFactoryTest extends TestCase
     public function testFactorySettings()
     {
         $factory = new PathSegmentFactory();
-        $this->assertAttributeSame('path', 'patternOptionName', $factory);
-        $this->assertAttributeSame('/', 'delimiter', $factory);
+
+        $invoker = function ($methodName) { return $this->{$methodName}(); };
+        $protectedInvoker = $invoker->bindTo($factory, $factory);
+
+        $this->assertSame('path', $protectedInvoker('getPatternOptionKey'));
+        $this->assertSame('/', $protectedInvoker('getDelimiter'));
     }
 }

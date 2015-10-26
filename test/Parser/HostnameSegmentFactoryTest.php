@@ -27,7 +27,11 @@ class HostnameSegmentFactoryTest extends TestCase
     public function testFactorySettings()
     {
         $factory = new HostnameSegmentFactory();
-        $this->assertAttributeSame('hostname', 'patternOptionName', $factory);
-        $this->assertAttributeSame('.', 'delimiter', $factory);
+
+        $invoker = function ($methodName) { return $this->{$methodName}(); };
+        $protectedInvoker = $invoker->bindTo($factory, $factory);
+
+        $this->assertSame('hostname', $protectedInvoker('getPatternOptionKey'));
+        $this->assertSame('.', $protectedInvoker('getDelimiter'));
     }
 }

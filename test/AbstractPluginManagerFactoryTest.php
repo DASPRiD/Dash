@@ -12,7 +12,6 @@ namespace DashTest\Parser;
 use Dash\AbstractPluginManagerFactory;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use ReflectionProperty;
 use Zend\ServiceManager\AbstractPluginManager;
 
 /**
@@ -52,16 +51,10 @@ class AbstractPluginManagerFactoryTest extends TestCase
     protected function buildFactory()
     {
         $pluginManager = $this->prophesize()->willExtend(AbstractPluginManager::class)->reveal();
-        $factory = $this->prophesize()->willExtend(AbstractPluginManagerFactory::class)->reveal();
+        $factory = $this->prophesize()->willExtend(AbstractPluginManagerFactory::class);
+        $factory->getConfigKey()->willReturn('manager');
+        $factory->getClassName()->willReturn(get_class($pluginManager));
 
-        $reflectionProperty = new ReflectionProperty(AbstractPluginManagerFactory::class, 'configKey');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($factory, 'manager');
-
-        $reflectionProperty = new ReflectionProperty(AbstractPluginManagerFactory::class, 'className');
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($factory, get_class($pluginManager));
-
-        return $factory;
+        return $factory->reveal();
     }
 }

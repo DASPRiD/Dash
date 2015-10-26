@@ -19,28 +19,30 @@ use Zend\ServiceManager\Factory\FactoryInterface;
 abstract class AbstractPluginManagerFactory implements FactoryInterface
 {
     /**
-     * @var string
-     */
-    protected $configKey;
-
-    /**
-     * @var string
-     */
-    protected $className;
-
-    /**
      * {@inheritdoc}
      *
      * @return AbstractPluginManager
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = $container->has('config') ? $container->get('config') : [];
+        $config    = $container->has('config') ? $container->get('config') : [];
+        $configKey = $this->getConfigKey();
+        $className = $this->getClassName();
 
-        if (isset($config['dash'][$this->configKey]) && is_array($config['dash'][$this->configKey])) {
-            return new $this->className($container, $config['dash'][$this->configKey]);
+        if (isset($config['dash'][$configKey]) && is_array($config['dash'][$configKey])) {
+            return new $className($container, $config['dash'][$configKey]);
         }
 
-        return new $this->className($container);
+        return new $className($container);
     }
+
+    /**
+     * @return string
+     */
+    abstract protected function getConfigKey();
+
+    /**
+     * @return string
+     */
+    abstract protected function getClassName();
 }

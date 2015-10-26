@@ -28,7 +28,11 @@ class ParserManagerFactoryTest extends TestCase
     public function testFactorySettings()
     {
         $factory = new ParserManagerFactory();
-        $this->assertAttributeSame('parser_manager', 'configKey', $factory);
-        $this->assertAttributeSame(ParserManager::class, 'className', $factory);
+
+        $invoker = function ($methodName) { return $this->{$methodName}(); };
+        $protectedInvoker = $invoker->bindTo($factory, $factory);
+
+        $this->assertSame('parser_manager', $protectedInvoker('getConfigKey'));
+        $this->assertSame(ParserManager::class, $protectedInvoker('getClassName'));
     }
 }
