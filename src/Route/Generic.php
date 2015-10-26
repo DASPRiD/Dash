@@ -15,7 +15,7 @@ use Dash\MatchResult\SchemeNotAllowed;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Parser\ParserInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
-use Dash\RouteCollection\RouteCollectionUtils;
+use Dash\RouteCollection\RouteCollectionMatcher;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -179,7 +179,7 @@ class Generic implements RouteInterface
             return null;
         }
 
-        return RouteCollectionUtils::matchRouteCollection($this->children, $request, $pathOffset, $params);
+        return RouteCollectionMatcher::matchRouteCollection($this->children, $request, $pathOffset, $params);
     }
 
     /**

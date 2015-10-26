@@ -16,20 +16,20 @@ use Dash\MatchResult\SchemeNotAllowed;
 use Dash\MatchResult\SuccessfulMatch;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
-use Dash\RouteCollection\RouteCollectionUtils;
+use Dash\RouteCollection\RouteCollectionMatcher;
 use IteratorAggregate;
 use PHPUnit_Framework_TestCase as TestCase;
 use Prophecy\Argument;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * @covers Dash\RouteCollection\RouteCollectionUtils
+ * @covers Dash\RouteCollection\RouteCollectionMatcher
  */
-class RouteCollectionUtilsTest extends TestCase
+class RouteCollectionMatcherTest extends TestCase
 {
     public function testNullReturnOnNoMatch()
     {
-        $this->assertNull(RouteCollectionUtils::matchRouteCollection(
+        $this->assertNull(RouteCollectionMatcher::matchRouteCollection(
             $this->buildRouteCollection([]),
             $this->prophesize(ServerRequestInterface::class)->reveal(),
             0,
@@ -43,7 +43,7 @@ class RouteCollectionUtilsTest extends TestCase
         $expectedMatchResult->getRouteName()->willReturn(null);
         $expectedMatchResult->getParams()->willReturn([]);
 
-        $matchResult = RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+        $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             'foo' => null,
             'bar' => $expectedMatchResult->reveal(),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
@@ -57,7 +57,7 @@ class RouteCollectionUtilsTest extends TestCase
     {
         $expectedMatchResult = $this->prophesize(MatchResultInterface::class)->reveal();
 
-        $matchResult = RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+        $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             null,
             $this->prophesize(SchemeNotAllowed::class)->reveal(),
             $this->prophesize(MethodNotAllowed::class)->reveal(),
@@ -72,7 +72,7 @@ class RouteCollectionUtilsTest extends TestCase
     {
         $expectedMatchResult = $this->prophesize(SchemeNotAllowed::class)->reveal();
 
-        $matchResult = RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+        $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             $expectedMatchResult,
             $this->prophesize(SchemeNotAllowed::class)->reveal(),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
@@ -84,7 +84,7 @@ class RouteCollectionUtilsTest extends TestCase
     {
         $expectedMatchResult = $this->prophesize(SchemeNotAllowed::class)->reveal();
 
-        $matchResult = RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+        $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             $expectedMatchResult,
             $this->prophesize(MethodNotAllowed::class)->reveal(),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
@@ -100,7 +100,7 @@ class RouteCollectionUtilsTest extends TestCase
         $secondMatchResult = $this->prophesize(MethodNotAllowed::class);
         $secondMatchResult->getAllowedMethods()->willReturn(['POST']);
 
-        $matchResult = RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+        $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             $firstMatchResult->reveal(),
             $secondMatchResult->reveal(),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
@@ -122,7 +122,7 @@ class RouteCollectionUtilsTest extends TestCase
             )
         );
 
-        RouteCollectionUtils::matchRouteCollection($this->buildRouteCollection([
+        RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             $matchResultResult->reveal(),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
     }

@@ -19,7 +19,7 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * Utility methods for working with route collections.
  */
-final class RouteCollectionUtils
+final class RouteCollectionMatcher
 {
     /**
      * This is a purely static class, so disallow instantiating.

@@ -14,7 +14,7 @@ use Dash\Exception\RuntimeException;
 use Dash\Exception\UnexpectedValueException;
 use Dash\MatchResult\UnsuccessfulMatch;
 use Dash\RouteCollection\RouteCollectionInterface;
-use Dash\RouteCollection\RouteCollectionUtils;
+use Dash\RouteCollection\RouteCollectionMatcher;
 use Dash\RouterInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -74,7 +74,7 @@ class Router implements RouterInterface
     {
         $basePathLength = strlen($this->baseUri['path']);
 
-        return RouteCollectionUtils::matchRouteCollection(
+        return RouteCollectionMatcher::matchRouteCollection(
             $this->routeCollection,
             $request,
             $basePathLength,
