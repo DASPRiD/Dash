@@ -51,10 +51,12 @@ class AbstractPluginManagerFactoryTest extends TestCase
     protected function buildFactory()
     {
         $pluginManager = $this->prophesize()->willExtend(AbstractPluginManager::class)->reveal();
-        $factory = $this->prophesize()->willExtend(AbstractPluginManagerFactory::class);
-        $factory->getConfigKey()->willReturn('manager');
-        $factory->getClassName()->willReturn(get_class($pluginManager));
 
-        return $factory->reveal();
+        $factory = $this->getMockForAbstractClass(AbstractPluginManagerFactory::class);
+        $factory->expects($this->once())->method('getConfigKey')->will($this->returnValue('manager'));
+        $factory->expects($this->once())->method('getClassName')->will($this->returnValue(get_class($pluginManager)));
+        $factory->__construct();
+
+        return $factory;
     }
 }

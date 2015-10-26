@@ -82,10 +82,11 @@ class AbstractSegmentFactoryTest extends TestCase
 
     protected function buildFactory()
     {
-        $factory = $this->prophesize()->willExtend(AbstractSegmentFactory::class);
-        $factory->getPatternOptionKey()->willReturn('pattern');
-        $factory->getDelimiter()->willReturn('-');
+        $factory = $this->getMockForAbstractClass(AbstractSegmentFactory::class);
+        $factory->expects($this->once())->method('getPatternOptionKey')->will($this->returnValue('pattern'));
+        $factory->expects($this->once())->method('getDelimiter')->will($this->returnValue('-'));
+        $factory->__construct();
 
-        return $factory->reveal();
+        return $factory;
     }
 }
