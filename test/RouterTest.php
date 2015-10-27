@@ -90,40 +90,16 @@ class RouterTest extends TestCase
         new Router($this->buildRouteCollection(), '/foo/');
     }
 
-    public function testSuccessfulMatchResultIsReturned()
+    public function testPathOffsetIspPassed()
     {
-        $expectedMatchResult = new SuccessfulMatch([]);
-
-        $successfulRoute = $this->prophesize(RouteInterface::class);
-        $successfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn($expectedMatchResult);
-
-        $unsuccessfulRoute = $this->prophesize(RouteInterface::class);
-        $unsuccessfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn(null);
+        $route = $this->prophesize(RouteInterface::class);
+        $route->match(Argument::type(ServerRequestInterface::class), 4)->willReturn(null);
 
         $router = new Router($this->buildRouteCollection([
-            'foo' => $unsuccessfulRoute->reveal(),
-            'bar' => $successfulRoute->reveal(),
-        ]), 'http://example.com');
+            'foo' => $route->reveal(),
+        ]), 'http://example.com/foo');
 
-        $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
-        $this->assertSame('bar', $matchResult->getRouteName());
-        $this->assertSame('bar', $matchResult->getRouteName());
-    }
-
-    public function testUnsuccessfulMatchResultIsReturned()
-    {
-        $expectedMatchResult = new UnsuccessfulMatch();
-
-        $unsuccessfulRoute = $this->prophesize(RouteInterface::class);
-        $unsuccessfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn($expectedMatchResult);
-
-        $router = new Router($this->buildRouteCollection([
-            'foo' => $unsuccessfulRoute->reveal(),
-        ]), 'http://example.com');
-
-        $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
-        $this->assertSame($expectedMatchResult, $matchResult);
+        $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
     }
 
     public function testUnsuccessfulMatchResultIsCreatedOnNoMatch()
@@ -132,27 +108,6 @@ class RouterTest extends TestCase
 
         $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
         $this->assertInstanceOf(UnsuccessfulMatch::class, $matchResult);
-    }
-
-    public function testExceptionOnUnexpectedSuccessfulMatchResult()
-    {
-        $expectedMatchResult = $this->prophesize(MatchResultInterface::class);
-        $expectedMatchResult->isSuccess()->willReturn(true);
-
-        $successfulRoute = $this->prophesize(RouteInterface::class);
-        $successfulRoute->match(Argument::type(ServerRequestInterface::class), 0)->willReturn(
-            $expectedMatchResult->reveal()
-        );
-
-        $router = new Router($this->buildRouteCollection([
-            'foo' => $successfulRoute->reveal(),
-        ]), 'http://example.com');
-
-        $this->setExpectedException(
-            UnexpectedValueException::class,
-            'Expected instance of Dash\MatchResult\SuccessfulMatch, received'
-        );
-        $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
     }
 
     public function testPathOffsetIsPassed()

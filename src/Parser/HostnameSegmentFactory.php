@@ -9,37 +9,24 @@
 
 namespace Dash\Parser;
 
-use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
-
 /**
  * Factory for hostname segments.
- *
- * The factory creates a hostname-specific segment parser. Parsers which share
- * the same pattern and constraints will be cached and re-used.
  */
-class HostnameSegmentFactory implements FactoryInterface
+class HostnameSegmentFactory extends AbstractSegmentFactory
 {
     /**
-     * @var Segment[]
+     * {@inheritdoc}
      */
-    protected $cache = [];
+    protected function getPatternOptionKey()
+    {
+        return 'hostname';
+    }
 
     /**
      * {@inheritdoc}
-     *
-     * @return Segment
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    protected function getDelimiter()
     {
-        $pattern     = (isset($options['hostname']) ? $options['hostname'] : '');
-        $constraints = (isset($options['constraints']) ? $options['constraints'] : []);
-        $key         = serialize([$pattern, $constraints]);
-
-        if (!isset($this->cache[$key])) {
-            $this->cache[$key] = new Segment('.', $pattern, $constraints);
-        }
-
-        return $this->cache[$key];
+        return '.';
     }
 }

@@ -9,9 +9,8 @@
 
 namespace DashTest\Parser;
 
+use Dash\Parser\AbstractSegmentFactory;
 use Dash\Parser\PathSegmentFactory;
-use Dash\Parser\Segment;
-use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
 
 /**
@@ -19,64 +18,20 @@ use PHPUnit_Framework_TestCase as TestCase;
  */
 class PathSegmentFactoryTest extends TestCase
 {
-    public function testFactoryWithoutConfiguration()
+    public function testFactoryUsesAbstractSegmentFactory()
     {
         $factory = new PathSegmentFactory();
-        $parser  = $factory($this->prophesize(ContainerInterface::class)->reveal(), '');
-
-        $this->assertInstanceOf(Segment::class, $parser);
-        $this->assertAttributeSame('/', 'delimiter', $parser);
-        $this->assertAttributeSame('', 'pattern', $parser);
-        $this->assertAttributeSame([], 'constraints', $parser);
+        $this->assertInstanceOf(AbstractSegmentFactory::class, $factory);
     }
 
-    public function testFactoryWithConfiguration()
+    public function testFactorySettings()
     {
         $factory = new PathSegmentFactory();
-        $parser = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-                'path'        => '/:foo/bar',
-                'constraints' => ['foo' => '1'],
-            ]
-        );
 
-        $this->assertInstanceOf(Segment::class, $parser);
-        $this->assertAttributeSame('/', 'delimiter', $parser);
-        $this->assertAttributeSame('/:foo/bar', 'pattern', $parser);
-        $this->assertAttributeSame(['foo' => '1'], 'constraints', $parser);
-    }
+        $invoker = function ($methodName) { return $this->{$methodName}(); };
+        $protectedInvoker = $invoker->bindTo($factory, $factory);
 
-    public function testFactoryReusesInstancesWithSameConfiguration()
-    {
-        $factory = new PathSegmentFactory();
-        $parser1 = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-            'path'        => '/:foo/bar',
-            'constraints' => ['foo' => '1'],
-            ]
-        );
-        $parser2 = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-            'path'        => '/:foo/bar',
-            'constraints' => ['foo' => '1'],
-            ]
-        );
-        $parser3 = $factory(
-            $this->prophesize(ContainerInterface::class)->reveal(),
-            '',
-            [
-            'path'        => '/:bar/bar',
-            'constraints' => ['bar' => '1'],
-            ]
-        );
-
-        $this->assertSame($parser1, $parser2);
-        $this->assertNotSame($parser1, $parser3);
+        $this->assertSame('path', $protectedInvoker('getPatternOptionKey'));
+        $this->assertSame('/', $protectedInvoker('getDelimiter'));
     }
 }

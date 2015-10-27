@@ -9,38 +9,24 @@
 
 namespace Dash\Parser;
 
-use Dash\Parser\Segment;
-use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
-
 /**
  * Factory for path segments.
- *
- * The factory creates a hostname-specific segment parser. Parsers which share
- * the same pattern and constraints will be cached and re-used.
  */
-class PathSegmentFactory implements FactoryInterface
+class PathSegmentFactory extends AbstractSegmentFactory
 {
     /**
-     * @var Segment[]
+     * {@inheritdoc}
      */
-    protected $cache = [];
+    protected function getPatternOptionKey()
+    {
+        return 'path';
+    }
 
     /**
      * {@inheritdoc}
-     *
-     * @return Segment
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    protected function getDelimiter()
     {
-        $pattern     = (isset($options['path']) ? $options['path'] : '');
-        $constraints = (isset($options['constraints']) ? $options['constraints'] : []);
-        $key         = serialize([$pattern, $constraints]);
-
-        if (!isset($this->cache[$key])) {
-            $this->cache[$key] = new Segment('/', $pattern, $constraints);
-        }
-
-        return $this->cache[$key];
+        return '/';
     }
 }
