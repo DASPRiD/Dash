@@ -10,11 +10,7 @@
 namespace DashTest\Route;
 
 use Dash\Exception\RuntimeException;
-use Dash\Exception\UnexpectedValueException;
-use Dash\MatchResult\MatchResultInterface;
-use Dash\MatchResult\MethodNotAllowed;
-use Dash\MatchResult\SchemeNotAllowed;
-use Dash\MatchResult\SuccessfulMatch;
+use Dash\MatchResult;
 use Dash\Parser\ParseResult;
 use Dash\Parser\ParserInterface;
 use Dash\Route\AssemblyResult;
@@ -43,7 +39,8 @@ class GenericTest extends TestCase
             'path_parser' => $this->getSuccessfullPathParser(),
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
@@ -75,7 +72,8 @@ class GenericTest extends TestCase
             'hostname_parser' => $this->getSuccessfullHostnameParser(),
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getParams());
     }
 
@@ -122,7 +120,8 @@ class GenericTest extends TestCase
             'port' => 80,
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
@@ -136,8 +135,9 @@ class GenericTest extends TestCase
             'secure' => true,
         ])->match($this->buildRequest(), 0);
 
-        $this->assertInstanceOf(SchemeNotAllowed::class, $matchResult);
-        $this->assertEquals('https://example.com/foo/bar', $matchResult->getAllowedUri());
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSchemeFailure());
+        $this->assertSame('https://example.com/foo/bar', (string) $matchResult->getAbsoluteUri());
     }
 
     public function testSwitchToNonSecureScheme()
@@ -146,8 +146,9 @@ class GenericTest extends TestCase
             'secure' => false,
         ])->match($this->buildRequest(true), 0);
 
-        $this->assertInstanceOf(SchemeNotAllowed::class, $matchResult);
-        $this->assertEquals('http://example.com/foo/bar', $matchResult->getAllowedUri());
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSchemeFailure());
+        $this->assertSame('http://example.com/foo/bar', (string) $matchResult->getAbsoluteUri());
     }
 
     public function testNoMatchWithEmptyMethod()
@@ -167,7 +168,8 @@ class GenericTest extends TestCase
             'methods' => ['post'],
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(MethodNotAllowed::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isMethodFailure());
         $this->assertEquals(['POST'], $matchResult->getAllowedMethods());
     }
 
@@ -178,7 +180,8 @@ class GenericTest extends TestCase
             'methods' => null,
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
@@ -189,7 +192,8 @@ class GenericTest extends TestCase
             'methods' => ['get', 'post'],
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar'], $matchResult->getParams());
     }
 
@@ -200,7 +204,8 @@ class GenericTest extends TestCase
             'defaults' => ['foo' => 'bat', 'baz' =>'bat'],
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getParams());
     }
 
@@ -219,11 +224,12 @@ class GenericTest extends TestCase
         $matchResult = $this->buildRoute([
             'path_parser' => $this->getIncompletePathParser(),
             'children' => $this->buildChildren([
-                new SuccessfulMatch(['baz' => 'bat']),
+                MatchResult::fromSuccess(['baz' => 'bat']),
             ]),
         ])->match($this->buildRequest(), 4);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertEquals(['foo' => 'bar', 'baz' => 'bat'], $matchResult->getParams());
     }
 

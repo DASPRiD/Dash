@@ -9,7 +9,6 @@
 
 namespace Dash;
 
-use Dash\MatchResult\MatchResultInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -21,7 +20,7 @@ interface RouterInterface
      * Matches a given request.
      *
      * @param  ServerRequestInterface $request
-     * @return MatchResultInterface
+     * @return MatchResult
      */
     public function match(ServerRequestInterface $request);
 

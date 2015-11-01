@@ -10,10 +10,7 @@
 namespace DashTest;
 
 use Dash\Exception\InvalidArgumentException;
-use Dash\Exception\RuntimeException;
-use Dash\MatchResult\MatchResultInterface;
-use Dash\MatchResult\SuccessfulMatch;
-use Dash\MatchResult\UnsuccessfulMatch;
+use Dash\MatchResult;
 use Dash\Route\AssemblyResult;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
@@ -23,7 +20,6 @@ use PHPUnit_Framework_TestCase as TestCase;
 use Prophecy\Argument;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
-use UnexpectedValueException;
 
 /**
  * @covers Dash\Router
@@ -107,7 +103,8 @@ class RouterTest extends TestCase
         $router = new Router($this->buildRouteCollection(), 'http://example.com');
 
         $matchResult = $router->match($this->prophesize(ServerRequestInterface::class)->reveal());
-        $this->assertInstanceOf(UnsuccessfulMatch::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertFalse($matchResult->isSuccess());
     }
 
     public function testPathOffsetIsPassed()
@@ -146,7 +143,7 @@ class RouterTest extends TestCase
         $router->assemble('foo');
     }
 
-    public function testAssembleReturnsCanonicalUriWhenForced()
+    public function testAssembleReturnsAbsoluteUriWhenEnforced()
     {
         $route = $this->prophesize(RouteInterface::class);
         $route->assemble([], null)->willReturn(new AssemblyResult());
@@ -156,7 +153,7 @@ class RouterTest extends TestCase
         ]), 'http://example.com/foo');
 
         $this->assertEquals('http://example.com/foo', $router->assemble('foo', [], [
-            'force_canonical' => true
+            'enforce_absolute_uri' => true
         ]));
     }
 

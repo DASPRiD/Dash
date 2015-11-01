@@ -10,10 +10,7 @@
 namespace Dash\RouteCollection;
 
 use Dash\Exception\UnexpectedValueException;
-use Dash\MatchResult\MatchResultInterface;
-use Dash\MatchResult\MethodNotAllowed;
-use Dash\MatchResult\SchemeNotAllowed;
-use Dash\MatchResult\SuccessfulMatch;
+use Dash\MatchResult;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -36,18 +33,18 @@ final class RouteCollectionMatcher
      * @param  RouteCollectionInterface $routeCollection
      * @param  ServerRequestInterface   $request
      * @param  int                      $pathOffset
-     * @param  array                    $previousParams
-     * @return MatchResultInterface|null
+     * @param  array                    $parentParams
+     * @return MatchResult|null
      * @throws UnexpectedValueException
      */
     public static function matchRouteCollection(
         RouteCollectionInterface $routeCollection,
         ServerRequestInterface $request,
         $pathOffset,
-        array $previousParams
+        array $parentParams
     ) {
-        $methodNotAllowedResult = null;
-        $schemeNotAllowedResult = null;
+        $methodFailureResult = null;
+        $schemeFailureResult = null;
 
         foreach ($routeCollection as $name => $route) {
             if (null === ($matchResult = $route->match($request, $pathOffset))) {
@@ -55,40 +52,32 @@ final class RouteCollectionMatcher
             }
 
             if ($matchResult->isSuccess()) {
-                if (!$matchResult instanceof SuccessfulMatch) {
-                    throw new UnexpectedValueException(sprintf(
-                        'Expected instance of %s, received %s',
-                        SuccessfulMatch::class,
-                        is_object($matchResult) ? get_class($matchResult) : gettype($matchResult)
-                    ));
-                }
-
-                return SuccessfulMatch::fromChildMatch($matchResult, $previousParams, $name);
+                return MatchResult::fromChildMatch($matchResult, $parentParams, $name);
             }
 
-            if ($matchResult instanceof MethodNotAllowed) {
-                if ($methodNotAllowedResult === null) {
-                    $methodNotAllowedResult = $matchResult;
+            if ($matchResult->isMethodFailure()) {
+                if (null === $methodFailureResult) {
+                    $methodFailureResult = $matchResult;
                 } else {
-                    $methodNotAllowedResult = MethodNotAllowed::merge($methodNotAllowedResult, $matchResult);
+                    $methodFailureResult = MatchResult::mergeMethodFailures($methodFailureResult, $matchResult);
                 }
                 continue;
             }
 
-            if ($matchResult instanceof SchemeNotAllowed) {
-                $schemeNotAllowedResult = $schemeNotAllowedResult ?: $matchResult;
+            if ($matchResult->isSchemeFailure()) {
+                $schemeFailureResult = $schemeFailureResult ?: $matchResult;
                 continue;
             }
 
             return $matchResult;
         }
 
-        if (null !== $schemeNotAllowedResult) {
-            return $schemeNotAllowedResult;
+        if (null !== $schemeFailureResult) {
+            return $schemeFailureResult;
         }
 
-        if (null !== $methodNotAllowedResult) {
-            return $methodNotAllowedResult;
+        if (null !== $methodFailureResult) {
+            return $methodFailureResult;
         }
 
         return null;

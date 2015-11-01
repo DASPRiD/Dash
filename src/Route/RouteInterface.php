@@ -9,7 +9,7 @@
 
 namespace Dash\Route;
 
-use Dash\MatchResult\MatchResultInterface;
+use Dash\MatchResult;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -22,7 +22,7 @@ interface RouteInterface
      *
      * @param  ServerRequestInterface $request
      * @param  int                    $pathOffset
-     * @return MatchResultInterface|null
+     * @return MatchResult|null
      */
     public function match(ServerRequestInterface $request, $pathOffset);
 
