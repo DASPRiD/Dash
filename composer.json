@@ -1,8 +1,13 @@
 {
     "name": "dasprid/dash",
-    "description": "Router prototype for Zend Framework 3",
+    "description": "Flexible PSR-7 compliant HTTP router",
     "license" : "BSD-2-Clause",
     "homepage": "https://github.com/DASPRiD/Dash",
+    "keywords": [
+        "routing",
+        "psr-7",
+        "http"
+    ],
     "authors": [
         {
             "name": "DASPRiD",
@@ -18,8 +23,7 @@
         "zendframework/zend-modulemanager": "^2.5|^3.0",
         "zendframework/zend-servicemanager": "dev-develop as 3.0.0",
         "squizlabs/php_codesniffer": "^2.3",
-        "athletic/athletic": "^0.1.8",
-        "zendframework/zend-diactoros": "^1.1"
+        "athletic/athletic": "^0.1.8"
     },
     "suggest": {
         "zendframework/zend-modulemanager": "Allows direct integration with Zend Framework applications",

@@ -21,8 +21,8 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/DASPRiD/Dash/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/DASPRiD/Dash/?branch=master)
 [![Coverage Status](https://coveralls.io/repos/DASPRiD/Dash/badge.png?branch=master)](https://coveralls.io/r/DASPRiD/Dash)
 
-This package is the router prototype for Zend Framework 3. It is not feature complete yet, but is complete enough to
-demonstrate the direction it is heading.
+Dash is a router which was initially meant to be a router for Zend Framework 3, but by now evolved into its very own
+package. It still has a soft dependency on ZF's Service Manager 3, but that may eventually be cleared completely.
 
 Route Configuration
 ===================
