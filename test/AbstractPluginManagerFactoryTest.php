@@ -7,7 +7,7 @@
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace DashTest\Parser;
+namespace DashTest;
 
 use Dash\AbstractPluginManagerFactory;
 use Interop\Container\ContainerInterface;
@@ -50,7 +50,7 @@ class AbstractPluginManagerFactoryTest extends TestCase
 
     protected function buildFactory()
     {
-        $pluginManager = $this->prophesize()->willExtend(AbstractPluginManager::class)->reveal();
+        $pluginManager = $this->getMockForAbstractClass(AbstractPluginManager::class, [], '', false);
 
         $factory = $this->getMockForAbstractClass(AbstractPluginManagerFactory::class);
         $factory->expects($this->once())->method('getConfigKey')->will($this->returnValue('manager'));
