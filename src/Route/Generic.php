@@ -10,9 +10,7 @@
 namespace Dash\Route;
 
 use Dash\Exception;
-use Dash\MatchResult\MethodNotAllowed;
-use Dash\MatchResult\SchemeNotAllowed;
-use Dash\MatchResult\SuccessfulMatch;
+use Dash\MatchResult;
 use Dash\Parser\ParserInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\RouteCollection\RouteCollectionMatcher;
@@ -94,9 +92,9 @@ class Generic implements RouteInterface
         }
 
         if (null !== $methods) {
-            $this->methods = array_flip(array_map('strtoupper', array_values($methods)));
+            $this->methods = array_map('strtoupper', array_values($methods));
 
-            if (isset($this->methods['GET']) ^ isset($this->methods['HEAD'])) {
+            if (in_array('GET', $this->methods) ^ in_array('HEAD', $this->methods)) {
                 // Implicitly enable HEAD on GET, and vise versa.
                 $this->methods['GET']  = true;
                 $this->methods['HEAD'] = true;
@@ -111,13 +109,14 @@ class Generic implements RouteInterface
      */
     public function match(ServerRequestInterface $request, $pathOffset)
     {
-        $uri = $request->getUri();
+        $uri    = $request->getUri();
+        $params = $this->defaults;
 
         // Verify scheme first, if set.
         if (true === $this->secure && 'https' !== $uri->getScheme()) {
-            return new SchemeNotAllowed($uri->withScheme('https'));
+            return MatchResult::fromSchemeFailure($uri->withScheme('https'));
         } elseif (false === $this->secure && 'http' !== $uri->getScheme()) {
-            return new SchemeNotAllowed($uri->withScheme('http'));
+            return MatchResult::fromSchemeFailure($uri->withScheme('http'));
         }
 
         // Then match hostname, if parser is set.
@@ -127,9 +126,11 @@ class Generic implements RouteInterface
             if (null === $hostnameResult || strlen($uri->getHost()) !== $hostnameResult->getMatchLength()) {
                 return null;
             }
+
+            $params = $hostnameResult->getParams() + $params;
         }
 
-        // Then match port, if set
+        // Then match port, if set.
         if (null !== $this->port) {
             $port = $uri->getPort() ?: ('http' === $uri->getScheme() ? 80 : 443);
 
@@ -148,22 +149,12 @@ class Generic implements RouteInterface
 
             $pathOffset += $pathResult->getMatchLength();
             $completePathMatched = ($pathOffset === strlen($uri->getPath()));
-        }
-
-        // Looks good so far, let's create a match.
-        $params = $this->defaults;
-
-        if (isset($hostnameResult)) {
-            $params = $hostnameResult->getParams() + $params;
-        }
-
-        if (isset($pathResult)) {
             $params = $pathResult->getParams() + $params;
         }
 
         if ($completePathMatched) {
-            if (null === $this->methods || isset($this->methods[$request->getMethod()])) {
-                return new SuccessfulMatch($params);
+            if (null === $this->methods || in_array($request->getMethod(), $this->methods)) {
+                return MatchResult::fromSuccess($params);
             }
 
             if (empty($this->methods)) {
@@ -171,7 +162,7 @@ class Generic implements RouteInterface
                 return null;
             }
 
-            return new MethodNotAllowed(array_keys($this->methods));
+            return MatchResult::fromMethodFailure($this->methods);
         }
 
         // The path was not completely matched yet, so we check the children.

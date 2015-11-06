@@ -9,11 +9,7 @@
 
 namespace DashTest\RouteCollection;
 
-use Dash\Exception\UnexpectedValueException;
-use Dash\MatchResult\MatchResultInterface;
-use Dash\MatchResult\MethodNotAllowed;
-use Dash\MatchResult\SchemeNotAllowed;
-use Dash\MatchResult\SuccessfulMatch;
+use Dash\MatchResult;
 use Dash\Route\RouteInterface;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\RouteCollection\RouteCollectionMatcher;
@@ -21,6 +17,7 @@ use IteratorAggregate;
 use PHPUnit_Framework_TestCase as TestCase;
 use Prophecy\Argument;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @covers Dash\RouteCollection\RouteCollectionMatcher
@@ -39,28 +36,26 @@ class RouteCollectionMatcherTest extends TestCase
 
     public function testSuccessfulMatchResultIsReturned()
     {
-        $expectedMatchResult = $this->prophesize(SuccessfulMatch::class);
-        $expectedMatchResult->getRouteName()->willReturn(null);
-        $expectedMatchResult->getParams()->willReturn([]);
+        $expectedMatchResult = MatchResult::fromSuccess([]);
 
         $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             'foo' => null,
-            'bar' => $expectedMatchResult->reveal(),
+            'bar' => $expectedMatchResult,
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
 
-        $this->assertInstanceOf(SuccessfulMatch::class, $matchResult);
-        $this->assertSame('bar', $matchResult->getRouteName());
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isSuccess());
         $this->assertSame('bar', $matchResult->getRouteName());
     }
 
     public function testUnknownMatchResultTakesPrecedence()
     {
-        $expectedMatchResult = $this->prophesize(MatchResultInterface::class)->reveal();
+        $expectedMatchResult = MatchResult::fromMatchFailure();
 
         $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             null,
-            $this->prophesize(SchemeNotAllowed::class)->reveal(),
-            $this->prophesize(MethodNotAllowed::class)->reveal(),
+            MatchResult::fromSchemeFailure($this->prophesize(UriInterface::class)->reveal()),
+            MatchResult::fromMethodFailure([]),
             $expectedMatchResult,
             'no-call',
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
@@ -70,11 +65,11 @@ class RouteCollectionMatcherTest extends TestCase
 
     public function testFirstSchemeNotAllowedResultIsReturned()
     {
-        $expectedMatchResult = $this->prophesize(SchemeNotAllowed::class)->reveal();
+        $expectedMatchResult = MatchResult::fromSchemeFailure($this->prophesize(UriInterface::class)->reveal());
 
         $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             $expectedMatchResult,
-            $this->prophesize(SchemeNotAllowed::class)->reveal(),
+            MatchResult::fromSchemeFailure($this->prophesize(UriInterface::class)->reveal()),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
 
         $this->assertSame($expectedMatchResult, $matchResult);
@@ -82,11 +77,11 @@ class RouteCollectionMatcherTest extends TestCase
 
     public function testSchemeNotAllowedResultTakesPrecedence()
     {
-        $expectedMatchResult = $this->prophesize(SchemeNotAllowed::class)->reveal();
+        $expectedMatchResult = MatchResult::fromSchemeFailure($this->prophesize(UriInterface::class)->reveal());
 
         $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
             $expectedMatchResult,
-            $this->prophesize(MethodNotAllowed::class)->reveal(),
+            MatchResult::fromMethodFailure([]),
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
 
         $this->assertSame($expectedMatchResult, $matchResult);
@@ -94,37 +89,17 @@ class RouteCollectionMatcherTest extends TestCase
 
     public function testMethodNotAllowedResultsAreMerged()
     {
-        $firstMatchResult = $this->prophesize(MethodNotAllowed::class);
-        $firstMatchResult->getAllowedMethods()->willReturn(['GET']);
-
-        $secondMatchResult = $this->prophesize(MethodNotAllowed::class);
-        $secondMatchResult->getAllowedMethods()->willReturn(['POST']);
+        $firstMatchResult  = MatchResult::fromMethodFailure(['GET']);
+        $secondMatchResult = MatchResult::fromMethodFailure(['POST']);
 
         $matchResult = RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
-            $firstMatchResult->reveal(),
-            $secondMatchResult->reveal(),
+            $firstMatchResult,
+            $secondMatchResult,
         ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
 
-        $this->assertInstanceOf(MethodNotAllowed::class, $matchResult);
+        $this->assertInstanceOf(MatchResult::class, $matchResult);
+        $this->assertTrue($matchResult->isMethodFailure());
         $this->assertEquals(['GET', 'POST'], $matchResult->getAllowedMethods());
-    }
-
-    public function testExceptionOnUnexpectedSuccessfulMatchResult()
-    {
-        $matchResultResult = $this->prophesize(MatchResultInterface::class);
-        $matchResultResult->isSuccess()->willReturn(true);
-
-        $this->setExpectedException(
-            UnexpectedValueException::class,
-            sprintf(
-                'Expected instance of %s, received',
-                SuccessfulMatch::class
-            )
-        );
-
-        RouteCollectionMatcher::matchRouteCollection($this->buildRouteCollection([
-            $matchResultResult->reveal(),
-        ]), $this->prophesize(ServerRequestInterface::class)->reveal(), 0, []);
     }
 
     /**

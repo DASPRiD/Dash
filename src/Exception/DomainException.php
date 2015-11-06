@@ -7,11 +7,8 @@
  * @license   http://opensource.org/licenses/BSD-2-Clause Simplified BSD License
  */
 
-namespace Dash\MatchResult;
+namespace Dash\Exception;
 
-/**
- * Unspecific match result when the router could not match the request.
- */
-class UnsuccessfulMatch extends AbstractFailedMatch
+class DomainException extends \DomainException implements ExceptionInterface
 {
 }

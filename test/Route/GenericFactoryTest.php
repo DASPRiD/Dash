@@ -70,7 +70,7 @@ class GenericFactoryTest extends TestCase
 
         $this->assertInstanceOf(Generic::class, $route);
         $this->assertAttributeSame(['foo' => 'bar'], 'defaults', $route);
-        $this->assertAttributeSame(['POST' => 0], 'methods', $route);
+        $this->assertAttributeSame(['POST'], 'methods', $route);
         $this->assertAttributeSame(88, 'port', $route);
         $this->assertAttributeSame(true, 'secure', $route);
         $this->assertArrayHasKey('bar', self::readAttribute(self::readAttribute($route, 'children'), 'routes'));
@@ -90,7 +90,7 @@ class GenericFactoryTest extends TestCase
 
         $this->assertInstanceOf(Generic::class, $route);
         $this->assertAttributeSame(['foo' => 'baz', 'bat' => 'bar', 'baz' => 'bat'], 'defaults', $route);
-        $this->assertAttributeSame(['POST' => 0, 'PUT' => 1], 'methods', $route);
+        $this->assertAttributeSame(['POST', 'PUT'], 'methods', $route);
     }
 
     public function testFactoryWithSpecifiedParsers()

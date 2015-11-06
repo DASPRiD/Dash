@@ -12,7 +12,6 @@ namespace Dash;
 use Dash\Exception\InvalidArgumentException;
 use Dash\Exception\RuntimeException;
 use Dash\Exception\UnexpectedValueException;
-use Dash\MatchResult\UnsuccessfulMatch;
 use Dash\RouteCollection\RouteCollectionInterface;
 use Dash\RouteCollection\RouteCollectionMatcher;
 use Dash\RouterInterface;
@@ -79,7 +78,7 @@ class Router implements RouterInterface
             $request,
             $basePathLength,
             []
-        ) ?: new UnsuccessfulMatch();
+        ) ?: MatchResult::fromMatchFailure();
     }
 
     /**
@@ -108,7 +107,7 @@ class Router implements RouterInterface
             $this->baseUri['scheme'],
             $this->baseUri['host'],
             $this->baseUri['port'],
-            (isset($options['force_canonical']) && $options['force_canonical'])
+            (isset($options['enforce_absolute_uri']) && $options['enforce_absolute_uri'])
         );
     }
 
