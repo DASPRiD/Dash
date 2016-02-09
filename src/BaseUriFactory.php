@@ -9,26 +9,25 @@
 
 namespace Dash;
 
+use Dash\Exception\OutOfBoundsException;
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Exception\ServiceNotCreatedException;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Factory for a configured base URI.
  */
-class BaseUriFactory implements FactoryInterface
+class BaseUriFactory
 {
     /**
      * {@inheritdoc}
      *
      * @return string
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container)
     {
         $config = $container->has('config') ? $container->get('config') : [];
 
         if (!isset($config['dash']['base_uri'])) {
-            throw new ServiceNotCreatedException('Missing "base_uri" key in "dash" section');
+            throw new OutOfBoundsException('Missing "base_uri" key in "dash" section');
         }
 
         return $config['dash']['base_uri'];

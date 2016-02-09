@@ -11,8 +11,8 @@ namespace Dash\RouteCollection;
 
 use Dash\Exception;
 use Dash\Route\RouteInterface;
+use Dash\Route\RouteManager;
 use IteratorAggregate;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Lazy route collection which only instantiates routes when required.
@@ -20,7 +20,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
 {
     /**
-     * @var ServiceLocatorInterface
+     * @var RouteManager
      */
     protected $routeManager;
 
@@ -30,10 +30,10 @@ class LazyRouteCollection implements IteratorAggregate, RouteCollectionInterface
     protected $routes = [];
 
     /**
-     * @param ServiceLocatorInterface $routeManager
-     * @param array[]                 $routes
+     * @param RouteManager $routeManager
+     * @param array[]      $routes
      */
-    public function __construct(ServiceLocatorInterface $routeManager, array $routes)
+    public function __construct(RouteManager $routeManager, array $routes)
     {
         $this->routeManager = $routeManager;
         $serial = 0;

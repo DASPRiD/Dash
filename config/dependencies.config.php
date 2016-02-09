@@ -1,6 +1,6 @@
 <?php
 return [
-    'service_manager' => [
+    'dependencies' => [
         'factories' => [
             \Dash\Parser\ParserManager::class => \Dash\Parser\ParserManagerFactory::class,
             \Dash\Route\RouteManager::class => \Dash\Route\RouteManagerFactory::class,

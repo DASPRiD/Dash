@@ -11,12 +11,11 @@ namespace Dash;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Abstract factory for plugin managers.
  */
-abstract class AbstractPluginManagerFactory implements FactoryInterface
+abstract class AbstractPluginManagerFactory
 {
     /**
      * @var string
@@ -42,7 +41,7 @@ abstract class AbstractPluginManagerFactory implements FactoryInterface
      *
      * @return AbstractPluginManager
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container)
     {
         $config = $container->has('config') ? $container->get('config') : [];
 

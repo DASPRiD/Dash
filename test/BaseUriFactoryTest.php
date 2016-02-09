@@ -10,9 +10,9 @@
 namespace DashTest;
 
 use Dash\BaseUriFactory;
+use Dash\Exception\OutOfBoundsException;
 use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\ServiceManager\Exception\ServiceNotCreatedException;
 
 /**
  * @covers Dash\BaseUriFactory
@@ -21,7 +21,7 @@ class BaseUriFactoryTest extends TestCase
 {
     public function testFailureWithoutConfig()
     {
-        $this->setExpectedException(ServiceNotCreatedException::class, 'Missing "base_uri" key in "dash" section');
+        $this->setExpectedException(OutOfBoundsException::class, 'Missing "base_uri" key in "dash" section');
 
         $factory = new BaseUriFactory();
         $factory($this->getContainer(), '');

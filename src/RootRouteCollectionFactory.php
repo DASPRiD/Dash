@@ -12,19 +12,18 @@ namespace Dash;
 use Dash\Route\RouteManager;
 use Dash\RouteCollection\LazyRouteCollection;
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Factory for the root route collection.
  */
-class RootRouteCollectionFactory implements FactoryInterface
+class RootRouteCollectionFactory
 {
     /**
      * {@inheritdoc}
      *
      * @return LazyRouteCollection
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container)
     {
         $config = $container->has('config') ? $container->get('config') : [];
 

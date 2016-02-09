@@ -12,16 +12,15 @@ namespace Dash\Route;
 use Dash\Parser\ParserManager;
 use Dash\RouteCollection\LazyRouteCollection;
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
-class GenericFactory implements FactoryInterface
+class GenericFactory
 {
     /**
      * {@inheritdoc}
      *
      * @return Generic
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container, $resolvedName, array $options = null)
     {
         if ($options === null) {
             return new Generic();

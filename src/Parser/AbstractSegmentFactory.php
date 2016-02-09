@@ -10,7 +10,6 @@
 namespace Dash\Parser;
 
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Abstract factory for segments.
@@ -18,7 +17,7 @@ use Zend\ServiceManager\Factory\FactoryInterface;
  * The factory creates a segment parser. Parsers which share the same pattern and constraints will be cached and
  * re-used.
  */
-abstract class AbstractSegmentFactory implements FactoryInterface
+abstract class AbstractSegmentFactory
 {
     /**
      * @var Segment[]
@@ -49,7 +48,7 @@ abstract class AbstractSegmentFactory implements FactoryInterface
      *
      * @return Segment
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container, $resolvedName, array $options = null)
     {
         $pattern     = (isset($options[$this->patternOptionKey]) ? $options[$this->patternOptionKey] : '');
         $constraints = (isset($options['constraints']) ? $options['constraints'] : []);

@@ -10,19 +10,18 @@
 namespace Dash;
 
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Factory for the default router.
  */
-class RouterFactory implements FactoryInterface
+class RouterFactory
 {
     /**
      * {@inheritdoc}
      *
      * @return Router
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $container)
     {
         return new Router(
             $container->get('DashRootRouteCollection'),

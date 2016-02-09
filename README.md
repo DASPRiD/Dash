@@ -22,7 +22,14 @@
 [![Coverage Status](https://coveralls.io/repos/DASPRiD/Dash/badge.png?branch=master)](https://coveralls.io/r/DASPRiD/Dash)
 
 Dash is a router which was initially meant to be a router for Zend Framework 3, but by now evolved into its very own
-package. It still has a soft dependency on ZF's Service Manager 3, but that may eventually be cleared completely.
+package. It has a dependency on ZF's ServiceManager, but purely for its plugin manager implementation.
+
+Installation
+============
+Dash is supposed to be used with a dependency container, but can in theory be used without one. In the average case
+where you are using Dash with another framework which supplies you a dependency container, there is a file placed in
+the config directory, which includes all factories which have to be registered. These factories assume that your
+container also supplies a config array via the name "config". For specific contents of it, refer to the examples below.
 
 Route Configuration
 ===================
@@ -35,9 +42,9 @@ parameters, the format for the shortcut parameters are:
 This may feel counter intuitive, but the idea is that the most frequently changed parameter appears earliest in the
 order so that when defining child routes you can skip parameters you wish to inherit.
 
-`path`, will expect a string, whereas `defaults` will expect an array and `method` will expect either an array of methods
-this route should match, a single method in a string, or a string of `'*'` for all methods. An empty string `''` will
-match no methods. Currently, passing no method defaults to `'*'`.
+`path`, will expect a string, whereas `defaults` will expect an array and `method` will expect either an array of
+methods this route should match, a single method in a string, or a string of `'*'` for all methods. An empty string `''`
+will match no methods. Currently, passing no method defaults to `'*'`.
 
 Along with the indexed shortcut parameters, named configuration can also be passed using key value pairs:
 
