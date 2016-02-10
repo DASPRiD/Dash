@@ -14,6 +14,9 @@ namespace Dash;
  */
 class ConfigProvider
 {
+    /**
+     * @return array
+     */
     public function __invoke()
     {
         return require __DIR__ . '/../config/dependencies.config.php';
