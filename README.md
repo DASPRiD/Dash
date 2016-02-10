@@ -70,9 +70,8 @@ Child routes can be simply defined in the `children` key of the configuration of
 ```
 'dash' => [
     'routes' => [
-        'user' => ['/user', ['action' => 'index', 'controller' => 'UserController'], 'children' =>
-        [
-            'create' => ['/create', ['action' => 'create'], 'create', ['get', 'post']],
+        'user' => ['/user', ['action' => 'index', 'controller' => 'UserController'], 'children' => [
+            'create' => ['/create', ['action' => 'create'], ['get', 'post']],
             'edit' => ['/edit/:id', ['action' => 'edit'], ['get', 'post'], 'constraints' => ['id' => '\d+']],
             'delete' => ['/delete/:id', ['action' => 'delete'], 'get', 'constraints' => ['id' => '\d+']],
         ]],
