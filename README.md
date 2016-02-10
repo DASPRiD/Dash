@@ -31,6 +31,9 @@ where you are using Dash with another framework which supplies you a dependency 
 the config directory, which includes all factories which have to be registered. These factories assume that your
 container also supplies a config array via the name "config". For specific contents of it, refer to the examples below.
 
+Withint your application, you can easily retrieve the dependency config by instantiating `Dash\ConfigProvider`. Since it
+implements an __invoke() method, it can be used with config managers like expressive-config-manager.
+
 Route Configuration
 ===================
 
